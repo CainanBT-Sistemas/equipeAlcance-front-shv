@@ -1,0 +1,40 @@
+:host ::ng-deep {
+    body {
+        position: absolute;
+        width: 100%;
+
+        .p-accordion {
+            position: relative;
+            margin-top: 2%;
+            .p-accordion-tab {
+                .p-toggleable-content {
+                    .inline {
+                        display: flex;
+                        flex-direction: row;
+                        .ng-star-inserted{
+                            margin: 0.8%;
+                        }
+                    }
+                    .footer{
+                        margin-top: 3%;
+                    }
+                }
+            }
+        }
+
+
+        .formAgendamentoCard .p-card {
+            position: relative;
+            width: 95%;
+            left: 2%;
+            top: 2%;
+        }
+
+        .streamsCard .p-card {
+            position: relative;
+            width: 95%;
+            left: 2%;
+            top: 4%;
+        }
+    }
+}

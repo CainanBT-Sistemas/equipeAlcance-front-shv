@@ -7,7 +7,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { PanelModule } from 'primeng/panel';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -33,16 +33,41 @@ import { AvatarGroupModule } from 'primeng/avatargroup';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { MenuModule } from 'primeng/menu';
 import { TabViewModule } from 'primeng/tabview';
+import { BadgeModule } from 'primeng/badge';
+import { DataViewModule } from 'primeng/dataview';
+import { DialogModule } from 'primeng/dialog';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { TagModule } from 'primeng/tag';
+import { SkeletonModule } from 'primeng/skeleton';
+import { TableModule } from 'primeng/table';
+import { ConfirmPopupModule } from 'primeng/confirmpopup';
+
 
 
 //COMPONENTS
 import { AppComponent } from './app.component';
 import { LoginPageComponent } from './pages/public/login-page/login-page.component';
+import { RegisterPageComponent } from './pages/public/register-page/register-page.component';
+import { ToolbarComponent } from './components/pages/toolbar/toolbar.component';
+import { DashboardPageComponent } from './pages/private/dashboard-page/dashboard-page.component';
+import { MyStreamComponent } from './pages/private/my-stream/my-stream.component';
+import { WhatchStreamerComponent } from './pages/private/whatch-streamer/whatch-streamer.component';
+import { MyScheduleComponent } from './pages/private/my-schedule/my-schedule.component';
+import { MyAccountComponent } from './pages/private/my-account/my-account.component';
+import { AdministrativoPageComponent } from './pages/private/admin/administrativo-page/administrativo-page.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    LoginPageComponent
+    LoginPageComponent,
+    RegisterPageComponent,
+    ToolbarComponent,
+    DashboardPageComponent,
+    MyStreamComponent,
+    WhatchStreamerComponent,
+    MyScheduleComponent,
+    MyAccountComponent,
+    AdministrativoPageComponent
   ],
   imports: [
     BrowserModule,
@@ -74,6 +99,14 @@ import { LoginPageComponent } from './pages/public/login-page/login-page.compone
     MenuModule,
     TabViewModule,
     AccordionModule,
+    BadgeModule,
+    DataViewModule,
+    DialogModule,
+    MultiSelectModule,
+    TagModule,
+    SkeletonModule,
+    TableModule,
+    ConfirmPopupModule,
     
   ],exports: [
     BrowserModule,
@@ -105,8 +138,17 @@ import { LoginPageComponent } from './pages/public/login-page/login-page.compone
     MenuModule,
     TabViewModule,
     AccordionModule,
+    BadgeModule,
+    DataViewModule,
+    DialogModule,
+    MultiSelectModule,
+    TagModule,
+    SkeletonModule,
+    TableModule,
+    ConfirmPopupModule,
   ],
   providers: [
+    ConfirmationService,
     MessageService,
     provideAnimationsAsync()
   ],

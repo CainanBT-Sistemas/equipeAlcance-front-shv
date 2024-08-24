@@ -1,1 +1,29 @@
-<p>login-page works!</p>
+<body>
+    <p-toast />
+    <p-panel>
+        <p-header>
+            <img class="img" src="../../../../assets/imgs/equipe-alcance-background1920x1080.png" width="50%"
+                height="50%" alt="">
+        </p-header>
+
+        <form [formGroup]="loginForm">
+            <br>
+            <p-floatLabel>
+                <input pInputText id="username" formControlName="username" [disabled]="isloading" />
+                <label for="username">Username</label>
+            </p-floatLabel>
+            <br><br>
+            <p-floatLabel>
+                <p-password [toggleMask]="true" id="password" formControlName="password" [feedback]="false" />
+                <label for="password">password</label>
+            </p-floatLabel>
+            <br>
+        </form>
+
+        <p-footer>
+            <p-button class="btnEntrar" label="Entrar" [loading]="isloading" (click)="login()" />
+            <p-button class="btnCadastrar" label="Criar uma conta" (click)="register()" />
+        </p-footer>
+    </p-panel>
+
+</body>

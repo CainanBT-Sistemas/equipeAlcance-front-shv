@@ -1,0 +1,90 @@
+:host ::ng-deep {
+    body {
+        background-color: #fff;
+
+        .p-toolbar {
+            position: relative;
+            background-color: #083855;
+            border-top-left-radius: 0px;
+            border-top-right-radius: 0px;
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            border-color: #122a39;
+
+            .p-toolbar-group-left {
+                color: #FFF;
+                font-size: larger;
+                font-weight: bold;
+    
+                span {
+                    position: relative;
+                    left: 5%;
+                }
+            }
+
+            .p-toolbar-group-center {
+                .p-button {
+                    background-color: transparent;
+                    border: 0;
+                }
+            }
+    
+            .p-toolbar-group-right {
+                color: #FFF;
+                 font-weight: bold;
+     
+                 .p-menu{
+                     background-color: #122a39;
+                     border-radius: 30px;
+                     color: #fff;
+     
+                     .p-submenu-header{
+                         color: #fff;
+                         background-color: #1c4259;
+                     }
+     
+                     .p-menu-start {
+                         position: relative;
+                         left: 10%;
+                         width: 90%;
+         
+                         .nameUser {
+                             font-size: medium;
+                             font-weight: bold;
+                             font-style: italic;
+                             font-size: large;
+                         }
+         
+                         .typeUser {
+                             position: relative;
+                             font-weight: 300;
+                             font-style: oblique;
+                             font-size: small;
+                         }
+                     }
+     
+                     .p-menu-list{
+     
+                         .p-menuitem{
+                             .p-menuitem-content{
+                                 .p-menuitem-link{
+                                     background-color: #122a39;
+                                     border-radius: 30px;
+                                     span{
+                                         color: #fff;
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                 }
+     
+                 .p-button {
+                     background-color: transparent;
+                     border: 0;
+                 }
+     
+             }
+        }
+    }
+}

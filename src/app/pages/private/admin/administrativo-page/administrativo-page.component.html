@@ -1,0 +1,213 @@
+<p-menu class="menuOptionUserList" #menuOptionUserList [model]="menuOptionUserListitems" [popup]="true" />
+<p-menu class="menuOptionSelectUserList" #menuOptionSelectUserList [model]="menuOptionSelectUserListItems" [popup]="true" />
+<p-toast />
+<p-confirmPopup />
+
+<body>
+    <p-dialog class="createUser" header="Criação de usuario" [modal]="true" [(visible)]="showDialogCreateUser"
+        [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [maximizable]="true">
+        <p-card header="Criar a conta do usuário"
+            subheader="Lembre-se o grupo SHV e EquipeAlcance tem parceria, todos usuario e senha é o mesmo para essa parceria.">
+            <form [formGroup]="createUserForm">
+                <p-floatLabel>
+                    <input type="text" pInputText id="name" formControlName="name" pTooltip="Nome de verdade"
+                        tooltipPosition="top" required [disabled]="isloading" />
+                    <label for="name">Nome</label>
+                </p-floatLabel>
+                <br><br>
+                <p-floatLabel>
+                    <input type="text" pInputText formControlName="email" id="email" pTooltip="Email para contato"
+                        tooltipPosition="top" required [disabled]="isloading" />
+                    <label for="email">Email</label>
+                </p-floatLabel>
+                <br><br>
+                <p-floatLabel>
+                    <p-calendar formControlName="dtNasc" dateFormat="dd/mm/yy" pTooltip="Data de nascimento"
+                        tooltipPosition="top" required [disabled]="isloading" />
+                    <label for="dtNasc">Quando foi que nasceu?</label>
+                </p-floatLabel>
+                <br><br>
+                <p-floatLabel>
+                    <input type="text" pInputText id="username" formControlName="username"
+                        pTooltip="Usuário para acessar o sistema" tooltipPosition="top" required
+                        [disabled]="isloading" />
+                    <label for="username">Username</label>
+                </p-floatLabel>
+                <br><br>
+                <p-floatLabel>
+                    <p-password formControlName="password" promptLabel="Informe uma senha forte"
+                        weakLabel="muito simples" mediumLabel="Hmmm essa pode dar trabalho..."
+                        strongLabel="Assim esta perfeito" [feedback]="true" [toggleMask]="true"
+                        pTooltip="Uma senha que você nao vai esquecer" tooltipPosition="top" required
+                        [disabled]="isloading" />
+                    <label for="password">password</label>
+                </p-floatLabel>
+                <br><br>
+                <p-floatLabel>
+                    <p-password formControlName="rePassword" [feedback]="false" [toggleMask]="true"
+                        pTooltip="Repita a senha para ter certeza que ão vai esquecer" tooltipPosition="top" required
+                        [disabled]="isloading" />
+                    <label for="rePassword">confirm password</label>
+                </p-floatLabel>
+                <br><br>
+            </form>
+            <p-footer>
+                <p-button class="btnCadastrar" label="Cadastrar" [loading]="isloading" (click)="registerUser()" />
+                <p-button class="btnCancelar" label="Voltar ao login" (click)="cancelCreateUser()" />
+            </p-footer>
+        </p-card>
+    </p-dialog>
+
+    <p-dialog class="editUser" header="Atualização de usuario" [modal]="true" [(visible)]="showDialogUpdateUser"
+        [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [maximizable]="true">
+        <p-card header="Informações da conta" subheader="Aqui você pode ver e editar as informações da conta">
+            <form [formGroup]="userEditForm">
+                <p-floatLabel>
+                    <input type="text" pInputText id="name" formControlName="name" pTooltip="Nome de verdade"
+                        tooltipPosition="top" required [disabled]="isloading" />
+                    <label for="name">Nome</label>
+                </p-floatLabel>
+                <br><br>
+                <p-floatLabel>
+                    <input type="text" pInputText formControlName="email" id="email" pTooltip="Wmail para contato"
+                        tooltipPosition="top" required [disabled]="isloading" />
+                    <label for="email">Email</label>
+                </p-floatLabel>
+                <br><br>
+                <p-floatLabel>
+                    <p-calendar formControlName="dtNasc" dateFormat="dd/mm/yy" pTooltip="Data de nascimento"
+                        tooltipPosition="top" required [disabled]="isloading" />
+                    <label for="dtNasc">Quando foi que nasceu?</label>
+                </p-floatLabel>
+                <br><br>
+                <p-floatLabel>
+                    <input type="text" pInputText id="username" formControlName="username"
+                        pTooltip="Usuário para acessar o sistema" tooltipPosition="top" required
+                        [disabled]="isloading" />
+                    <label for="username">Username</label>
+                </p-floatLabel>
+                <br><br>
+                <ng-container *ngIf="editPassword; else templateNoEditPassword">
+                    <p-floatLabel>
+                        <p-password formControlName="password" promptLabel="Informe uma nova senha forte"
+                            weakLabel="muito simples" mediumLabel="Hmmm essa pode dar trabalho..."
+                            strongLabel="Assim esta perfeito" [feedback]="true" [toggleMask]="true"
+                            pTooltip="Uma senha nova que você não vai esquecer" tooltipPosition="top" required
+                            [disabled]="isloading" />
+                        <label for="password">Nova senha</label>
+                    </p-floatLabel>
+                    <br><br>
+                    <p-floatLabel>
+                        <p-password formControlName="rePassword" [feedback]="false" [toggleMask]="true"
+                            pTooltip="Repita a senha para ter certeza que não vai esquecer" tooltipPosition="top"
+                            required [disabled]="isloading" />
+                        <label for="rePassword">confirme a nova senha</label>
+                    </p-floatLabel>
+                    <br>
+                    <p-button class="btnChangePassword" label="cancelar atualização de senha" [loading]="isloading"
+                        (click)="cancelPasswordUpdate()" />
+                </ng-container>
+                <ng-template #templateNoEditPassword>
+                    <p-button class="btnChangePassword" label="Mudar senha" [loading]="isloading"
+                        (click)="cancelPasswordUpdate()" />
+                </ng-template>
+            </form>
+            <p-footer>
+                <p-button class="btnCadastrar" label="Atualizar" [loading]="isloading" (click)="updateUser()" />
+            </p-footer>
+        </p-card>
+    </p-dialog>
+
+    <p-dialog class="listUser" header="Lista de Usuarios" [modal]="true" [(visible)]="showDialogListUsers"
+        [maximizable]="true" [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }">
+
+        <h5>Lista de usuários</h5>
+
+        <p-table #dt1 [value]="personsToList" [tableStyle]="{ 'min-width': '50%' }" styleClass="p-datatable-striped"
+            responsiveLayout="stack" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20]"
+            [globalFilterFields]="['username', 'name', 'status', 'block','typeUser']">
+
+            <ng-template pTemplate="caption">
+                <div class="flex align-items-center justify-content-between">
+                    <p-iconField iconPosition="left" class="ml-auto">
+                        <p-inputIcon>
+                            <i class="pi pi-search"></i>
+                        </p-inputIcon>
+                        <input pInputText type="text" (input)="dt1.filterGlobal(filterUserList($event),'contains')"
+                            placeholder="Search keyword" />
+                    </p-iconField>
+                    <p-button icon="pi pi-refresh" (click)="refreshTable()" />
+                </div>
+            </ng-template>
+
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="username">username
+                        <p-sortIcon field="username" />
+                    </th>
+                    <th pSortableColumn="name">name
+                        <p-sortIcon field="name" />
+                    </th>
+                    <th pSortableColumn="status">status
+                        <p-sortIcon field="status" />
+                    </th>
+                    <th pSortableColumn="block">block
+                        <p-sortIcon field="block" />
+                    </th>
+                    <th pSortableColumn="typeUser">typeUser
+                        <p-sortIcon field="typeUser" />
+                    </th>
+                    <th>Ações</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-person>
+                <tr>
+                    <td>{{person.username}}</td>
+                    <td>{{person.name}}</td>
+                    <td>{{person.status}}</td>
+                    <td>{{person.block}}</td>
+                    <td>{{person.typeUser}}</td>
+                    <td><p-button icon="pi pi-ellipsis-v"
+                            (click)="openMenuTableUser($event,menuOptionUserList,person)" /></td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="loadingbody">
+                <tr>
+                    <td><p-skeleton /></td>
+                    <td><p-skeleton /></td>
+                    <td><p-skeleton /></td>
+                    <td><p-skeleton /></td>
+                    <td><p-skeleton /></td>
+                    <td><p-skeleton /></td>
+            </ng-template>
+        </p-table>
+
+    </p-dialog>
+
+    <p-card class=" masterCard" header="Setor Administrativo"
+        subheader="Area administrativa aqui você pode gerenciar todo o sistema">
+        <p-card class="subCard" header="Usuarios" subheader="Lista de usuarios no sistema">
+            <p><b>Numero de usuários total: </b>{{allPersons.length}}</p>
+            <p><b>Numero de usuários ativos: </b>{{personsEnabled.length}}</p>
+            <p><b>Numero de usuários bloqueados: </b>{{personsDisabled.length}}</p>
+            <p><b>Numero de usuários deletados: </b>{{personsDeleted.length}}</p>
+            <p><b>Numero de usuários Administradores: </b>{{personsAdm.length}}</p>
+
+            <ng-template pTemplate="footer">
+                <p-button class="btnNewUser" label="Cadastrar um novo usuario" (click)="newUser()" />
+                <p-button class="btnListUser" label="Listar todos os usuário" (click)="menuOptionSelectUserList.toggle($event)"/>
+            </ng-template>
+        </p-card>
+
+        <p-card class="subCard" header="Plataformas de Stream"
+            subheader="Lista de plataformas de fazer stream (Twitch, Tiktok, Youtube, etc) no sistema">
+
+        </p-card>
+
+        <p-card class="subCard" header="Formulário de horario dos usuários"
+            subheader="Lista dos formularios de horarios dos usuários, aqui você consegue ver quem preencheu e quem não preencheu e acessar o formulario">
+
+        </p-card>
+    </p-card>
+</body>
