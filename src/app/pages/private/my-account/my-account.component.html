@@ -1,0 +1,66 @@
+<body>
+    <p-toast />
+    <p-card header="Informações da minha conta" subheader="Aqui você pode ver e editar as informações de conta">
+        <form [formGroup]="userEditForm">
+            <p-floatLabel>
+                <input type="text" pInputText id="name" formControlName="name" pTooltip="Seu nome de verdade"
+                    tooltipPosition="top" required [disabled]="isloading" />
+                <label for="name">Nome</label>
+            </p-floatLabel>
+            <br><br>
+            <p-floatLabel>
+                <input type="text" pInputText formControlName="email" id="email" pTooltip="Seu email para contato"
+                    tooltipPosition="top" required [disabled]="isloading" />
+                <label for="email">Email</label>
+            </p-floatLabel>
+            <br><br>
+            <p-floatLabel>
+                <p-calendar formControlName="dtNasc" dateFormat="dd/mm/yy" pTooltip="Sua data de nascimento"
+                    tooltipPosition="top" required [disabled]="isloading" />
+                <label for="dtNasc">Quando foi que você nasceu?</label>
+            </p-floatLabel>
+            <br><br>
+            <p-floatLabel>
+                <input type="text" pInputText id="username" formControlName="username"
+                    pTooltip="seu usuário para acessar o sistema" tooltipPosition="top" required
+                    [disabled]="isloading" />
+                <label for="username">Username</label>
+            </p-floatLabel>
+            <br><br>
+            <ng-container *ngIf="editPassword; else templateNoEditPassword">
+                <p-floatLabel>
+                    <p-password formControlName="passwordOld" [feedback]="false" [toggleMask]="true"
+                        pTooltip="Sua senha atual" tooltipPosition="top" required
+                        [disabled]="isloading" />
+                    <label for="rePassword">informe sua senha atual</label>
+                </p-floatLabel>
+                <br><br>
+                <p-floatLabel>
+                    <p-password formControlName="password" promptLabel="Informe uma nova senha forte"
+                        weakLabel="muito simples" mediumLabel="Hmmm essa pode dar trabalho..."
+                        strongLabel="Assim esta perfeito" [feedback]="true" [toggleMask]="true"
+                        pTooltip="Uma senha nova que você não vai esquecer" tooltipPosition="top" required
+                        [disabled]="isloading" />
+                    <label for="password">sua nova senha</label>
+                </p-floatLabel>
+                <br><br>
+                <p-floatLabel>
+                    <p-password formControlName="rePassword" [feedback]="false" [toggleMask]="true"
+                        pTooltip="Repita a senha para ter certeza que ão vai esquecer" tooltipPosition="top" required
+                        [disabled]="isloading" />
+                    <label for="rePassword">confirme sua nova senha</label>
+                </p-floatLabel>
+                <br>
+                <p-button class="btnChangePassword" label="cancelar atualização de senha" [loading]="isloading"
+                    (click)="cancelPasswordUpdate()" />
+            </ng-container>
+            <ng-template #templateNoEditPassword>
+                <p-button class="btnChangePassword" label="Mudar minha senha" [loading]="isloading"
+                    (click)="cancelPasswordUpdate()" />
+            </ng-template>
+        </form>
+        <p-footer>
+            <p-button class="btnCadastrar" label="Atualizar" [loading]="isloading" (click)="update()" />
+        </p-footer>
+    </p-card>
+</body>

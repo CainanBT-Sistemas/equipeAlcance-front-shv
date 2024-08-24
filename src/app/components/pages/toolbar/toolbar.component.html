@@ -1,0 +1,59 @@
+<body>
+
+    <p-dialog header="Usuário sem formulario de agendamento" [modal]="true" [(visible)]="showDialogSchedulePerson"
+        [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: '50vw' }" closable="false">
+        <p>
+            Para continuar a utilizar a plataforma preencha o formulário de agendamento
+        </p>
+        <div class="flex justify-content-end gap-2">
+            <p-button label="Preencher" (onClick)="goToMyStreams()" />
+        </div>
+    </p-dialog>
+
+    <p-dialog header="Usuário sem Stream cadastrada" [modal]="true" [(visible)]="showDialogStreamPerson"
+        [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: '50vw' }" closable="false">
+        <p>
+            Para continuar a utilizar a plataforma registre sua stream na plataforma.
+        </p>
+        <div class="flex justify-content-end gap-2">
+            <p-button label="Preencher" (onClick)="goToMyStreams()" />
+        </div>
+    </p-dialog>
+
+    <p-toolbar>
+        <ng-template pTemplate="start">
+            <h3>EQUIPE ALCANCE</h3>
+        </ng-template>
+
+        <ng-template pTemplate="center">
+            <p-button icon="pi pi-home" pTooltip="Pagina inicial" tooltipPosition="bottom" (click)="goToDashboard()" />
+            <p-button icon="pi pi-twitch" pTooltip="Minhas plataformas" tooltipPosition="bottom"
+                (click)="goToMyStreams()" />
+            <p-button icon="pi pi-video" pTooltip="Assistir comunidade" tooltipPosition="bottom"
+                (click)="goToWhatchStreamers()" />
+            <p-button icon="pi pi-calendar" pTooltip="minha agenda" tooltipPosition="bottom"
+                (click)="goToMySchedule()" />
+            <p-button icon="pi pi-percentage" pTooltip="minha pontuação" tooltipPosition="bottom"
+                (click)="goToMyPonctuaction()" />
+        </ng-template>
+
+        <ng-template pTemplate="end">
+            <p-menu #panelMenu [model]="menu" [popup]="true">
+                <ng-template class="infoUser" pTemplate="start">
+                    <span class="nameUser">{{getNameProfile()}}</span><br>
+                    <span class="typeUser">{{getTypeUser()}}</span>
+                </ng-template>
+            </p-menu>
+            <p-button (click)="panelMenu.toggle($event)">
+                <p-avatar [image]="getImageProfile()" shape="circle" />
+            </p-button>
+        </ng-template>
+    </p-toolbar>
+
+    <div *ngIf="openDashboard"><app-dashboard-page></app-dashboard-page></div>
+    <div *ngIf="openMyStreams"><app-my-stream></app-my-stream></div>
+    <div *ngIf="openWhatchStreamers"><app-whatch-streamer></app-whatch-streamer></div>
+    <div *ngIf="openMySchedule"><app-my-schedule></app-my-schedule></div>
+    <div *ngIf="openMyAccount"><app-my-account></app-my-account></div>
+    <div *ngIf="openPageAdministrativo"><app-administrativo-page></app-administrativo-page></div>
+</body>

@@ -1,0 +1,57 @@
+<body>
+    <p-toast />
+    <p-card header="Criar sua conta"
+        subheader="O grupo SHV e EquipeAlcance tem parceria, seu usuario e senha é o mesmo para os dois.">
+        <ng-template pTemplate="header">
+            <p-image src="../../../../assets/imgs/equipe-alcance-background1920x1080.png" alt="Image"/>
+        </ng-template>
+
+        <form [formGroup]="registerForm">
+            <p-floatLabel>
+                <input type="text" pInputText id="name" formControlName="name" pTooltip="Seu nome de verdade"
+                    tooltipPosition="top" required [disabled]="isloading" />
+                <label for="name">Nome</label>
+            </p-floatLabel>
+            <br><br>
+            <p-floatLabel>
+                <input type="text" pInputText formControlName="email" id="email" pTooltip="Seu email para contato"
+                    tooltipPosition="top" required [disabled]="isloading" />
+                <label for="email">Email</label>
+            </p-floatLabel>
+            <br><br>
+            <p-floatLabel>
+                <p-calendar formControlName="dtNasc" dateFormat="dd/mm/yy" pTooltip="Sua data de nascimento"
+                    tooltipPosition="top" required [disabled]="isloading" />
+                <label for="dtNasc">Quando foi que você nasceu?</label>
+            </p-floatLabel>
+            <br><br>
+            <p-floatLabel>
+                <input type="text" pInputText id="username" formControlName="username"
+                    pTooltip="seu usuário para acessar o sistema" tooltipPosition="top" required
+                    [disabled]="isloading" />
+                <label for="username">Username</label>
+            </p-floatLabel>
+            <br><br>
+            <p-floatLabel>
+                <p-password formControlName="password" promptLabel="Informe uma senha forte" weakLabel="muito simples"
+                    mediumLabel="Hmmm essa pode dar trabalho..." strongLabel="Assim esta perfeito" [feedback]="true"
+                    [toggleMask]="true" pTooltip="Uma senha que você nao vai esquecer" tooltipPosition="top" required
+                    [disabled]="isloading" />
+                <label for="password">password</label>
+            </p-floatLabel>
+            <br><br>
+            <p-floatLabel>
+                <p-password formControlName="rePassword" [feedback]="false" [toggleMask]="true"
+                    pTooltip="Repita a senha para ter certeza que ão vai esquecer" tooltipPosition="top" required
+                    [disabled]="isloading" />
+                <label for="rePassword">confirm password</label>
+            </p-floatLabel>
+            <br><br>
+        </form>
+        <p-footer>
+            <p-button class="btnCadastrar" label="Cadastrar" [loading]="isloading" (click)="register()" />
+            <p-button class="btnCancelar" label="Voltar ao login" (click)="cancel()" />
+        </p-footer>
+    </p-card>
+
+</body>
