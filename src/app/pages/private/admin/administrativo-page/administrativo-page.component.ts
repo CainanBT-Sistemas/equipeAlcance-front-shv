@@ -374,14 +374,14 @@ export class AdministrativoPageComponent {
 
   setTypeUser(typeUser: number, event: any): void {
     let messageConfirm = "";
-    let userRole = ""
+    let userRoleCode = 1
     if (typeUser == 0) {
       messageConfirm = "Tem certeza que deseja tornar " + this.personSelected.user.username + " um administrador?";
-      userRole = "admin"
+      userRoleCode = 0
     }
     if (typeUser == 1) {
       messageConfirm = "Tem certeza que deseja tornar " + this.personSelected.user.username + " um usuário comum?";
-      userRole = "user"
+      userRoleCode = 1
     }
     this.confirmationService.confirm({
       target: event.target as EventTarget,
@@ -392,7 +392,7 @@ export class AdministrativoPageComponent {
         let p = new PersonInsertUpdateAdapter();
 
         user.idPublic = this.personSelected.user.id
-        user.role = userRole
+        user.role = userRoleCode
         user.username = this.personSelected.user.username
 
         p.birthday = this.personSelected.birthday
