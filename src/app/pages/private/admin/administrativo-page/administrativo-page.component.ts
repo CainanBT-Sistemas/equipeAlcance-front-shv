@@ -1,3 +1,4 @@
+import { PlataformsAdapter } from './../../../../modules/streams/adapters/PlataformsAdapter';
 import { PersonResponseAdapter } from './../../../../modules/person/adapters/PersonResponseAdapter';
 import { ToastService } from './../../../../components/toast.service';
 import { Component } from '@angular/core';
@@ -10,6 +11,7 @@ import { PersonInsertUpdateAdapter } from '../../../../modules/person/adapters/P
 import { UserLoginAdapter } from '../../../../modules/person/adapters/UserLoginAdapter';
 import { UserDeleteOrBlockAdapter } from '../../../../modules/person/adapters/UserDeleteOrBlockAdapter';
 import { PersonDeleteAdapter } from '../../../../modules/person/adapters/PersonDeleteAdapter';
+import { StreamsService } from '../../../../services/streams.service';
 
 @Component({
   selector: 'app-administrativo-page',
@@ -40,26 +42,47 @@ export class AdministrativoPageComponent {
     rePassword: ['', Validators.required]
   });
 
+  createPlataformForm = this._formBuilder.group({
+    namePlataform: ['', Validators.required],
+    urlPlataform: ['', [Validators.required]]
+  });
+
   allPersons: PersonResponseAdapter[] = []
   personsEnabled: PersonResponseAdapter[] = []
   personsDisabled: PersonResponseAdapter[] = []
   personsDeleted: PersonResponseAdapter[] = []
   personsAdm: PersonResponseAdapter[] = []
   menuOptionUserListitems: MenuItem[] = [];
+  menuOptiontPlatformListItems: MenuItem[] = [];
   menuOptionSelectUserListItems: MenuItem[] = [];
+  menuOptionSelectPlatformListItems: MenuItem[] = [];
   personsToList: any[] = []
   personSelected = new PersonResponseAdapter();
+
+  allPlataforms: PlataformsAdapter[] = []
+  enabledPlataforms: PlataformsAdapter[] = []
+  desenabledPlataforms: PlataformsAdapter[] = []
+  plataformsToList: any[] = []
+  plataformSelected = new PlataformsAdapter();
+
+  formsUserCompleted = 0
+  formsUserNotCompleted = 0
 
   showDialogListUsers = false;
   showDialogUpdateUser = false;
   showDialogCreateUser = false
+  showDialogCreatePlataforms = false;
+  showDialogListPlataform = false
 
   listUserFilter: string = ""
-  typeListSelected = ""
+  listPlataformFilter: string = ""
+  typeListUserSelected = ""
+  typeListPlatformSelected = ""
 
   constructor(
     private _formBuilder: FormBuilder,
     private personService: PersonService,
+    private streamsService: StreamsService,
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
   ) {
@@ -67,10 +90,17 @@ export class AdministrativoPageComponent {
   }
 
   ngOnInit(): void {
+    this.configUsersInfo()
+    this.configPlataformsInfo()
+    this.configSchedulePersonsInfo();
+  }
+
+  //Inicio metodos para gerenciamento de Usuario
+
+  configUsersInfo() {
     this.loadPersonsInfo()
     this.createMenuSelectListUser()
   }
-  //Inicio inicialização basica
 
   loadPersonsInfo() {
     this.loadAllPersons();
@@ -86,7 +116,6 @@ export class AdministrativoPageComponent {
   async loadAllPersons() {
     this.clearAllListPersons();
     this.personService.getAll().subscribe(res => {
-      console.log(res);
       this.allPersons = res;
       this.getQuantityTypePersons()
     }, error => {
@@ -157,10 +186,6 @@ export class AdministrativoPageComponent {
     ]
   }
 
-  //Fim inicialização basica
-
-  //Inicio metodos para gerenciamento de Usuario
-
   openListaUsuarios(persons: PersonResponseAdapter[], tipoLista: string): void {
     this.personsToList = []
     persons.forEach(item => {
@@ -179,12 +204,12 @@ export class AdministrativoPageComponent {
       }
       this.personsToList.push({ username: item.user.username, name: item.name, status: status, block: block, typeUser: item.user.role.roleName })
     })
-    this.typeListSelected = tipoLista;
+    this.typeListUserSelected = tipoLista;
     this.showDialogListUsers = true;
 
   }
 
-  async refreshTable() {
+  async refreshTableUser() {
     this.personsToList = []
     this.toastService.showToastInfo("Informação", "Atualizando tabela isso pode levar alguns segundos")
     this.clearAllListPersons();
@@ -214,20 +239,20 @@ export class AdministrativoPageComponent {
         })
 
         this.personsToList = []
-        if (this.typeListSelected == "Todos") {
-          this.openListaUsuarios(this.allPersons, this.typeListSelected)
+        if (this.typeListUserSelected == "Todos") {
+          this.openListaUsuarios(this.allPersons, this.typeListUserSelected)
         }
-        if (this.typeListSelected == "Ativos") {
-          this.openListaUsuarios(this.personsEnabled, this.typeListSelected)
+        if (this.typeListUserSelected == "Ativos") {
+          this.openListaUsuarios(this.personsEnabled, this.typeListUserSelected)
         }
-        if (this.typeListSelected == "Bloqueados") {
-          this.openListaUsuarios(this.personsDisabled, this.typeListSelected)
+        if (this.typeListUserSelected == "Bloqueados") {
+          this.openListaUsuarios(this.personsDisabled, this.typeListUserSelected)
         }
-        if (this.typeListSelected == "Deletados") {
-          this.openListaUsuarios(this.personsDeleted, this.typeListSelected)
+        if (this.typeListUserSelected == "Deletados") {
+          this.openListaUsuarios(this.personsDeleted, this.typeListUserSelected)
         }
-        if (this.typeListSelected == "Administradores") {
-          this.openListaUsuarios(this.personsAdm, this.typeListSelected)
+        if (this.typeListUserSelected == "Administradores") {
+          this.openListaUsuarios(this.personsAdm, this.typeListUserSelected)
         }
 
       }
@@ -303,6 +328,7 @@ export class AdministrativoPageComponent {
         if (disabled) {
           this.personService.deletePerson(personDelete).subscribe(res => {
             this.toastService.showToastSuccess("Exclusão de usuário", "Usuário excluido com sucesso")
+            this.refreshTableUser()
           }, error => {
             if (error.error != null) {
               this.toastService.showToastError(error.error.title, error.error.message);
@@ -314,6 +340,7 @@ export class AdministrativoPageComponent {
         } else {
           this.personService.recoverPerson(personDelete).subscribe(res => {
             this.toastService.showToastSuccess("Recuperaçao de usuário", "Usuário recuperado com sucesso")
+            this.refreshTableUser()
           }, error => {
             if (error.error != null) {
               this.toastService.showToastError(error.error.title, error.error.message);
@@ -347,6 +374,7 @@ export class AdministrativoPageComponent {
         if (blocked) {
           this.personService.blockPerson(user).subscribe(res => {
             this.toastService.showToastSuccess("Bloqueio de usuário", "Usuário bloqueado com sucesso")
+            this.refreshTableUser()
           }, error => {
             if (error.error != null) {
               this.toastService.showToastError(error.error.title, error.error.message);
@@ -358,6 +386,7 @@ export class AdministrativoPageComponent {
         } else {
           this.personService.unblockPerson(user).subscribe(res => {
             this.toastService.showToastSuccess("Desbloqueio de usuário", "Usuário desbloqueado com sucesso")
+            this.refreshTableUser()
           }, error => {
             if (error.error != null) {
               this.toastService.showToastError(error.error.title, error.error.message);
@@ -403,6 +432,7 @@ export class AdministrativoPageComponent {
 
         this.personService.updateTypeUser(p).subscribe(res => {
           this.toastService.showToastSuccess("Atualização de usuário", "Usuário atualizado com sucesso")
+          this.refreshTableUser()
         }, error => {
           if (error.error != null) {
             this.toastService.showToastError(error.error.title, error.error.message);
@@ -426,8 +456,6 @@ export class AdministrativoPageComponent {
   newUser() {
     this.showDialogCreateUser = true;
   }
-
-  //Fim metodos para gerenciamento de Usuario
 
   //Inicio da logica de atualização de usuario
   updateUser() {
@@ -621,5 +649,238 @@ export class AdministrativoPageComponent {
   }
 
   //Fim da Logica para criação de usuário
+  //Fim metodos para gerenciamento de Usuario
 
+  //Inicio metodos para ggerenciamento de plataformas
+  configPlataformsInfo() {
+    this.createMenuOptionSelectPlatformListItems();
+    this.loadAllPlataforms();
+  }
+
+  loadAllPlataforms() {
+    this.allPlataforms = []
+    this.streamsService.findAllStreamsPlataforms().subscribe(res => {
+      this.allPlataforms = res;
+      console.log(this.allPlataforms);
+      
+      this.separePlatformsByStatus();
+    }, error => {
+      if (error.error != null) {
+        this.toastService.showToastError(error.error.title, error.error.message);
+      } else {
+        this.toastService.showToastError("Carregamendo de plataformas", "Falha ao consultar plataformas: Servidor com problemas");
+      }
+      console.log(error);
+    })
+  }
+
+  separePlatformsByStatus() {
+    this.enabledPlataforms = [];
+    this.desenabledPlataforms = []
+    this.allPlataforms.forEach(item => {
+      if (item.active) {
+        this.enabledPlataforms.push(item)
+      } else {
+        this.desenabledPlataforms.push(item)
+      }
+    })
+  }
+
+  createMenuOptionSelectPlatformListItems() {
+    this.menuOptionSelectPlatformListItems = [
+      { label: "Todas", command: () => { this.openListPlataform(this.allPlataforms, "todas") } },
+      { label: "Ativadas", command: () => { this.openListPlataform(this.enabledPlataforms, "ativadas") } },
+      { label: "Desativadas", command: () => { this.openListPlataform(this.desenabledPlataforms, "desativadas") } },
+    ]
+  }
+
+  openListPlataform(list: PlataformsAdapter[], tipoLista: string) {
+    this.plataformsToList = [];
+    list.forEach(item => {
+      let status = "";
+      if (item.active) {
+        status = "Ativado"
+      } else {
+        status = "Desativado"
+      }
+      this.plataformsToList.push({ name: item.name, url: item.urlBase, status: status })
+    })
+    this.typeListPlatformSelected = tipoLista;
+    this.showDialogListPlataform = true;
+
+  }
+
+  newPlatform() {
+    this.showDialogCreatePlataforms = true;
+  }
+
+  cancelCreatePlataform() {
+    this.clearFieldsCreatePlataform();
+    this.showDialogCreatePlataforms = false;
+  }
+
+  clearFieldsCreatePlataform() {
+    this.createPlataformForm = this._formBuilder.group({
+      namePlataform: ['', Validators.required],
+      urlPlataform: ['', [Validators.required]]
+    });
+  }
+
+  registerPlataform() {
+    if (this.createPlataformForm.get('namePlataform')?.valid == false) {
+      this.toastService.showToastWarn("Campo inválido", "Informe um nome");
+      return
+    }
+
+    if (this.createPlataformForm.get('urlPlataform')?.valid == false) {
+      this.toastService.showToastWarn("Campo inválido", "Informe uma URL");
+      return
+    }
+    this.isloading = true;
+    let adapter = new PlataformsAdapter();
+
+    adapter.name = "" + this.createPlataformForm.get('namePlataform')?.value;
+    adapter.urlBase = "" + this.createPlataformForm.get('urlPlataform')?.value;
+
+    this.streamsService.registerPlataform(adapter).subscribe(res => {
+      this.toastService.showToastSuccess("Registro de plataforma", "Plataforma adicionado com sucesso")
+      setTimeout(() => {
+        this.isloading = false;
+        this.showDialogCreatePlataforms = false
+        this.loadAllPlataforms()
+      }, 1000);
+    }, error => {
+      if (error.error != null) {
+        this.isloading = false;
+        this.toastService.showToastError(error.error.title, error.error.message);
+      } else {
+        this.isloading = false;
+        this.toastService.showToastError("Registro de plataforma", "Falha ao adicionar plataforma: Servidor com problemas");
+      }
+      console.log(error);
+      this.isloading = false;
+    })
+  }
+
+  refreshTablePlataform() {
+    this.plataformsToList = []
+    this.toastService.showToastInfo("Informação", "Atualizando tabela isso pode levar alguns segundos")
+    this.clearAllListPlataforms();
+    this.streamsService.findAllStreamsPlataforms().subscribe(res => {
+      this.allPlataforms = res;
+      console.log(res);
+      this.allPlataforms.forEach(item => {
+        if (item.active) {
+          this.enabledPlataforms.push(item)
+        } else {
+          this.desenabledPlataforms.push(item)
+        }
+      })
+      if (this.typeListPlatformSelected == "todas") {
+        this.openListPlataform(this.allPlataforms, this.typeListPlatformSelected)
+      }
+      if (this.typeListPlatformSelected == "ativadas") {
+        this.openListPlataform(this.enabledPlataforms, this.typeListPlatformSelected)
+      }
+      if (this.typeListPlatformSelected == "desativadas") {
+        this.openListPlataform(this.desenabledPlataforms, this.typeListPlatformSelected)
+      }
+    }, error => {
+      if (error.error != null) {
+        this.toastService.showToastError(error.error.title, error.error.message);
+      } else {
+        this.toastService.showToastError("Carregamendo de plataformas", "Falha ao consultar plataformas: Servidor com problemas");
+      }
+      console.log(error);
+    })
+  }
+
+  clearAllListPlataforms() {
+    this.allPlataforms = []
+    this.enabledPlataforms = []
+    this.desenabledPlataforms = []
+  }
+
+  filterPlataformList(e: any): any {
+    this.listPlataformFilter = e.target.value
+    return this.listPlataformFilter;
+  }
+
+  openMenuTablePlatform(event: any, menuOptionSelectPlatformListItems: Menu, platform: any) {
+    this.menuOptiontPlatformListItems = [];
+    let filter = this.allPlataforms.find(f => f.name == platform.name && f.urlBase == platform.url);
+    if (filter != undefined) {
+      this.plataformSelected = filter
+      if (this.plataformSelected.active) {
+        this.menuOptiontPlatformListItems.push({ label: "Desativar", command: () => this.setStatusPlataform(false, event) })
+      } else {
+        this.menuOptiontPlatformListItems.push({ label: "Ativar", command: () => this.setStatusPlataform(true, event) })
+      }
+      this.menuOptiontPlatformListItems.push({ label: "Ediar", command: () => this.editPlatform() })
+    }
+
+    menuOptionSelectPlatformListItems.toggle(event)
+  }
+
+  editPlatform(): void {
+    throw new Error('Method not implemented.');
+  }
+
+  setStatusPlataform(active: boolean, event: any): void {
+    let messageConfirm = "";
+    if (active) {
+      messageConfirm = "Tem certeza que deseja desativar a plataforma " + this.plataformSelected.name + "?"
+    } else {
+      messageConfirm = "Tem certeza que deseja ativar a plataforma " + this.plataformSelected.name + "?"
+    }
+    this.confirmationService.confirm({
+      target: event.target as EventTarget,
+      message: messageConfirm,
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        let adapter = new PlataformsAdapter();
+        adapter.active = active
+        adapter.idPublic = this.plataformSelected.idPublic
+        adapter.name = this.plataformSelected.name
+        adapter.urlBase = this.plataformSelected.urlBase
+        console.log(active);
+        if (!active) {
+          this.streamsService.disablePlataformPlataform(adapter).subscribe(res => {
+            this.toastService.showToastSuccess("Atualização de plataforma", "Plataforma atualizado com sucesso")
+            this.refreshTablePlataform()
+          }, error => {
+            if (error.error != null) {
+              this.toastService.showToastError(error.error.title, error.error.message);
+            } else {
+              this.toastService.showToastError("Atualização de plataforma", "Falha ao atualizar plataforma: Servidor com problemas");
+            }
+            console.log(error);
+          })
+        } else {
+          this.streamsService.enablePlataform(adapter).subscribe(res => {
+            this.toastService.showToastSuccess("Atualização de plataforma", "Plataforma atualizado com sucesso")
+            this.refreshTablePlataform()
+          }, error => {
+            if (error.error != null) {
+              this.toastService.showToastError(error.error.title, error.error.message);
+            } else {
+              this.toastService.showToastError("Atualização de plataforma", "Falha ao atualizar plataforma: Servidor com problemas");
+            }
+            console.log(error);
+          })
+        }
+
+      },
+      reject: () => { this.toastService.showToastInfo("Confimação", "Operação cancelada") }
+    })
+  }
+
+  //Fim metodos para ggerenciamento de plataformas
+
+  //Inicio metodos para ggerenciamento de Formularios de agendamento
+  configSchedulePersonsInfo(){
+    this.allPersons.forEach(person=>{
+      
+    })
+  }
 }

@@ -16,7 +16,7 @@ export class GlobalService {
   }
 
   static personIsADM() {
-    return (this.person.user.role.roleCode === 0)
+    return (this.person.user.role.roleCode <= 0)
   }
 
   static setPerson(p: PersonResponseAdapter) {

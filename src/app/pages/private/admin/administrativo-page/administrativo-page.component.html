@@ -1,5 +1,9 @@
 <p-menu class="menuOptionUserList" #menuOptionUserList [model]="menuOptionUserListitems" [popup]="true" />
-<p-menu class="menuOptionSelectUserList" #menuOptionSelectUserList [model]="menuOptionSelectUserListItems" [popup]="true" />
+<p-menu class="menuOptiontPlatformList" #menuOptiontPlatformList [model]="menuOptiontPlatformListItems" [popup]="true" />
+<p-menu class="menuOptionSelectUserList" #menuOptionSelectUserList [model]="menuOptionSelectUserListItems"
+    [popup]="true" />
+<p-menu class="menuOptionSelectPlatformList" #menuOptionSelectPlatformList [model]="menuOptionSelectPlatformListItems"
+    [popup]="true" />
 <p-toast />
 <p-confirmPopup />
 
@@ -53,7 +57,7 @@
             </form>
             <p-footer>
                 <p-button class="btnCadastrar" label="Cadastrar" [loading]="isloading" (click)="registerUser()" />
-                <p-button class="btnCancelar" label="Voltar ao login" (click)="cancelCreateUser()" />
+                <p-button class="btnCancelar" label="Cancelar" (click)="cancelCreateUser()" />
             </p-footer>
         </p-card>
     </p-dialog>
@@ -118,6 +122,53 @@
         </p-card>
     </p-dialog>
 
+    <p-dialog class="listPlataform" header="Lista de plataformas" [modal]="true" [(visible)]="showDialogListPlataform"
+        [maximizable]="true" [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }">
+        <h5>Lista de Plataformas de streams</h5>
+        <p-table #dt2 [value]="plataformsToList" [tableStyle]="{ 'min-width': '50%' }" styleClass="p-datatable-striped"
+            responsiveLayout="stack" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20]"
+            [globalFilterFields]="['name', 'url', 'status']">
+            <ng-template pTemplate="caption">
+                <div class="flex align-items-center justify-content-between">
+                    <p-iconField iconPosition="left" class="ml-auto">
+                        <p-inputIcon>
+                            <i class="pi pi-search"></i>
+                        </p-inputIcon>
+                        <input pInputText type="text" (input)="dt2.filterGlobal(filterPlataformList($event),'contains')"
+                            placeholder="Search keyword" />
+                    </p-iconField>
+                    <p-button icon="pi pi-refresh" (click)="refreshTablePlataform()" />
+                </div>
+            </ng-template>
+
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="name">name
+                        <p-sortIcon field="name" />
+                    </th>
+                    <th pSortableColumn="url">url
+                        <p-sortIcon field="url" />
+                    </th>
+                    <th pSortableColumn="status">status
+                        <p-sortIcon field="status" />
+                    </th>
+                    <th>Ações</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-platforms>
+                <tr>
+                    <td>{{platforms.name}}</td>
+                    <td>{{platforms.url}}</td>
+                    <td>{{platforms.status}}</td>
+                    <td><p-button icon="pi pi-ellipsis-v"
+                        (click)="openMenuTablePlatform($event,menuOptiontPlatformList,platforms)" /></td>
+                </tr>
+            </ng-template>
+
+        </p-table>
+    </p-dialog>
+
     <p-dialog class="listUser" header="Lista de Usuarios" [modal]="true" [(visible)]="showDialogListUsers"
         [maximizable]="true" [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }">
 
@@ -136,7 +187,7 @@
                         <input pInputText type="text" (input)="dt1.filterGlobal(filterUserList($event),'contains')"
                             placeholder="Search keyword" />
                     </p-iconField>
-                    <p-button icon="pi pi-refresh" (click)="refreshTable()" />
+                    <p-button icon="pi pi-refresh" (click)="refreshTableUser()" />
                 </div>
             </ng-template>
 
@@ -185,8 +236,34 @@
 
     </p-dialog>
 
+    <p-dialog class="createPlataform" header="Cadastro de Plataforma" [modal]="true" [(visible)]="showDialogCreatePlataforms"
+        [maximizable]="true" [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }">
+        <p-card header="Cadastrar plataforma" subheader="Cadastro de plataformas de streams">
+            <form [formGroup]="createPlataformForm">
+                <p-floatLabel>
+                    <input type="text" pInputText id="namePlataform" formControlName="namePlataform" pTooltip="Exemplo: twitch"
+                        tooltipPosition="top" required [disabled]="isloading" />
+                    <label for="namePlataform">Nome da plataforma</label>
+                </p-floatLabel>
+                <br><br>
+                <p-floatLabel>
+                    <input type="text" pInputText id="urlPlataform" formControlName="urlPlataform"
+                        pTooltip="Exemplo: https://www.twitch.tv/" tooltipPosition="top" required [disabled]="isloading" />
+                    <label for="urlPlataform">URL da plataforma</label>
+                </p-floatLabel>
+                <br><br>
+            </form>
+            <p-footer>
+                <p-button class="btnCadastrar" label="Cadastrar" [loading]="isloading"
+                    (click)="registerPlataform()" />
+                <p-button class="btnCancelar" label="Cancelar" (click)="cancelCreatePlataform()" />
+            </p-footer>
+        </p-card>
+    </p-dialog>
+
     <p-card class=" masterCard" header="Setor Administrativo"
         subheader="Area administrativa aqui você pode gerenciar todo o sistema">
+        
         <p-card class="subCard" header="Usuarios" subheader="Lista de usuarios no sistema">
             <p><b>Numero de usuários total: </b>{{allPersons.length}}</p>
             <p><b>Numero de usuários ativos: </b>{{personsEnabled.length}}</p>
@@ -195,19 +272,34 @@
             <p><b>Numero de usuários Administradores: </b>{{personsAdm.length}}</p>
 
             <ng-template pTemplate="footer">
-                <p-button class="btnNewUser" label="Cadastrar um novo usuario" (click)="newUser()" />
-                <p-button class="btnListUser" label="Listar todos os usuário" (click)="menuOptionSelectUserList.toggle($event)"/>
+                <p-button class="btnNew" label="Cadastrar um novo usuario" (click)="newUser()" />
+                <p-button class="btnList" label="Listar todos os usuário"
+                    (click)="menuOptionSelectUserList.toggle($event)" />
             </ng-template>
         </p-card>
 
         <p-card class="subCard" header="Plataformas de Stream"
             subheader="Lista de plataformas de fazer stream (Twitch, Tiktok, Youtube, etc) no sistema">
 
+            <p><b>Numero de plataformas total: </b>{{allPlataforms.length}}</p>
+            <p><b>Numero de plataformas ativadas: </b>{{enabledPlataforms.length}}</p>
+            <p><b>Numero de plataformas desativadas: </b>{{desenabledPlataforms.length}}</p>
+
+            <ng-template pTemplate="footer">
+                <p-button class="btnNew" label="Cadastrar uma nova plataforma" (click)="newPlatform()" />
+                <p-button class="btnList" label="Listar Plataformas"
+                    (click)="menuOptionSelectPlatformList.toggle($event)" />
+            </ng-template>
+
+
         </p-card>
 
         <p-card class="subCard" header="Formulário de horario dos usuários"
             subheader="Lista dos formularios de horarios dos usuários, aqui você consegue ver quem preencheu e quem não preencheu e acessar o formulario">
 
+            <p><b>Numero de usuários Ativos total: </b>{{personsEnabled.length}}</p>
+            <p><b>Numero de formularios preenchidos: </b>{{formsUserCompleted}}</p>
+            <p><b>Numero de formularios não preenchidos: </b>{{formsUserNotCompleted}}</p>
         </p-card>
     </p-card>
 </body>
