@@ -1,3 +1,4 @@
+import { ScheduleFormPerson } from './../../../../modules/schedule-person/adapters/ScheduleFormPerson';
 import { PlataformsAdapter } from './../../../../modules/streams/adapters/PlataformsAdapter';
 import { PersonResponseAdapter } from './../../../../modules/person/adapters/PersonResponseAdapter';
 import { ToastService } from './../../../../components/toast.service';
@@ -12,6 +13,13 @@ import { UserLoginAdapter } from '../../../../modules/person/adapters/UserLoginA
 import { UserDeleteOrBlockAdapter } from '../../../../modules/person/adapters/UserDeleteOrBlockAdapter';
 import { PersonDeleteAdapter } from '../../../../modules/person/adapters/PersonDeleteAdapter';
 import { StreamsService } from '../../../../services/streams.service';
+import { SchedulePersonService } from '../../../../services/schedule-person.service';
+import { SchedulePersonResponseAdapter } from '../../../../modules/schedule-person/adapters/SchedulePersonResponseAdapter';
+import { HorariosModel } from '../../../../modules/utils/horariosModel';
+import { LiveScheduleService } from '../../../../services/live-schedule.service';
+import { LiveScheduleAdapter } from '../../../../modules/live-schedule/LiveScheduleAdapter';
+import { DateUtilsService } from '../../../../services/date-utils.service';
+import { filter } from 'rxjs';
 
 @Component({
   selector: 'app-administrativo-page',
@@ -47,6 +55,11 @@ export class AdministrativoPageComponent {
     urlPlataform: ['', [Validators.required]]
   });
 
+  createScheduleLiveForm = this._formBuilder.group({
+    dateOfScehdule: [new Date(), Validators.required],
+    streamerToSchedule: [new PersonResponseAdapter(), Validators.required]
+  });
+
   allPersons: PersonResponseAdapter[] = []
   personsEnabled: PersonResponseAdapter[] = []
   personsDisabled: PersonResponseAdapter[] = []
@@ -54,8 +67,10 @@ export class AdministrativoPageComponent {
   personsAdm: PersonResponseAdapter[] = []
   menuOptionUserListitems: MenuItem[] = [];
   menuOptiontPlatformListItems: MenuItem[] = [];
+  menuOptiontSchedulePersonListItems: MenuItem[] = [];
   menuOptionSelectUserListItems: MenuItem[] = [];
   menuOptionSelectPlatformListItems: MenuItem[] = [];
+  menuOptionSelectSchedulePersonListItems: MenuItem[] = [];
   personsToList: any[] = []
   personSelected = new PersonResponseAdapter();
 
@@ -65,24 +80,64 @@ export class AdministrativoPageComponent {
   plataformsToList: any[] = []
   plataformSelected = new PlataformsAdapter();
 
-  formsUserCompleted = 0
-  formsUserNotCompleted = 0
+  scheduleFormPerson: ScheduleFormPerson[] = []
+  scheduleFormPersonCompleted: ScheduleFormPerson[] = []
+  scheduleFormPersonUncompleted: ScheduleFormPerson[] = []
+  scheduleFormPersonToList: any[] = []
+  scheduleFormPersonSelected: ScheduleFormPerson = new ScheduleFormPerson();
+
+  personsCanDoLive: PersonResponseAdapter[] = [];
+  schedulesOfDaySelected: LiveScheduleAdapter[] = []
+  schedulesOfDayToDelete: LiveScheduleAdapter[] = []
+  schedulesOfBeforeDaySelected: LiveScheduleAdapter[] = []
+  preSchedule: LiveScheduleAdapter[] = []
+  schedulesOfDayToList: any[] = []
+  dateSelected: number = 0;
 
   showDialogListUsers = false;
   showDialogUpdateUser = false;
   showDialogCreateUser = false
   showDialogCreatePlataforms = false;
+  showDialogUpdatePlataform = false;
   showDialogListPlataform = false
+  showDialogListSchedulePerson = false
+  showDialogSchedulePerson = false
+  showDialogCreateSchedulesLive = false
+  showDialogRegisterSchedulesLiveForm = false
+
+
 
   listUserFilter: string = ""
   listPlataformFilter: string = ""
+  listSchedulePersonFilter: string = ""
+  listScheduleOfDayToList: string = ""
   typeListUserSelected = ""
   typeListPlatformSelected = ""
+  typeListScheduleFormPersonSelected = ""
+  selectedDate = "Não selecionado"
+  timeSelected: string = ""
+
+  horariosDomingo: HorariosModel[] = [];
+  horariosSegunda: HorariosModel[] = [];
+  horariosTerca: HorariosModel[] = [];
+  horariosQuarta: HorariosModel[] = [];
+  horariosQuinta: HorariosModel[] = [];
+  horariosSexta: HorariosModel[] = [];
+  horariosSabado: HorariosModel[] = [];
+  listHoursSchedule: string[] = [
+    "00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11",
+    "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23",
+  ]
+  minDate: Date | undefined;
+  maxDate: Date | undefined;
+
 
   constructor(
     private _formBuilder: FormBuilder,
     private personService: PersonService,
     private streamsService: StreamsService,
+    private schedulePersonService: SchedulePersonService,
+    private liveScheduleService: LiveScheduleService,
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
   ) {
@@ -92,7 +147,11 @@ export class AdministrativoPageComponent {
   ngOnInit(): void {
     this.configUsersInfo()
     this.configPlataformsInfo()
-    this.configSchedulePersonsInfo();
+  }
+
+  refreshAll() {
+    this.configUsersInfo();
+    this.configPlataformsInfo()
   }
 
   //Inicio metodos para gerenciamento de Usuario
@@ -173,6 +232,7 @@ export class AdministrativoPageComponent {
           this.personsEnabled.push(item)
         }
       })
+      this.configSchedulePersonsInfo();
     }
   }
 
@@ -210,6 +270,7 @@ export class AdministrativoPageComponent {
   }
 
   async refreshTableUser() {
+    this.refreshAll()
     this.personsToList = []
     this.toastService.showToastInfo("Informação", "Atualizando tabela isso pode levar alguns segundos")
     this.clearAllListPersons();
@@ -221,23 +282,17 @@ export class AdministrativoPageComponent {
           if (item.user.blocked == false) {
             this.personsEnabled.push(item)
           }
-        })
-        this.allPersons.forEach(item => {
-          if (item.user.deleted == true) {
+          if (item.user.blocked == true) {
             this.personsDisabled.push(item)
           }
-        })
-        this.allPersons.forEach(item => {
           if (item.user.deleted == true) {
             this.personsDeleted.push(item)
           }
-        })
-        this.allPersons.forEach(item => {
           if (item.user.role.roleName === "admin") {
             this.personsAdm.push(item)
           }
         })
-
+        this.configSchedulePersonsInfo();
         this.personsToList = []
         if (this.typeListUserSelected == "Todos") {
           this.openListaUsuarios(this.allPersons, this.typeListUserSelected)
@@ -498,7 +553,7 @@ export class AdministrativoPageComponent {
     let user = new UserInsertUpdateAdapter();
     user.username = "" + this.userEditForm.get('username')?.value;
     user.idPublic = this.personSelected.user.id
-
+    user.role = this.personSelected.user.role.roleCode;
     let p = new PersonInsertUpdateAdapter();
     let date = this.userEditForm.get("dtNasc")?.value
 
@@ -515,6 +570,7 @@ export class AdministrativoPageComponent {
       p.user = user;
       this.personService.update(p).subscribe(response => {
         this.toastService.showToastSuccess("Atualização de usuário", "Usuário atualizado com sucesso")
+        this.refreshAll()
         setTimeout(() => {
           this.isloading = false;
           this.showDialogUpdateUser = false;
@@ -535,6 +591,7 @@ export class AdministrativoPageComponent {
       p.user = user;
       this.personService.update(p).subscribe(response => {
         this.toastService.showToastSuccess("Atualização de usuário", "Usuário atualizado com sucesso")
+        this.refreshAll()
         setTimeout(() => {
           this.isloading = false;
           this.showDialogUpdateUser = false;
@@ -614,10 +671,10 @@ export class AdministrativoPageComponent {
 
     this.personService.insert(person).subscribe(response => {
       this.toastService.showToastSuccess("Registro de usuário", "Usuário adicionado com sucesso")
+      this.refreshAll()
       setTimeout(() => {
         this.isloading = false;
         this.showDialogCreateUser = false
-        this.loadPersonsInfo()
       }, 1000);
     }, error => {
       if (error.error != null) {
@@ -662,7 +719,7 @@ export class AdministrativoPageComponent {
     this.streamsService.findAllStreamsPlataforms().subscribe(res => {
       this.allPlataforms = res;
       console.log(this.allPlataforms);
-      
+
       this.separePlatformsByStatus();
     }, error => {
       if (error.error != null) {
@@ -717,6 +774,7 @@ export class AdministrativoPageComponent {
   cancelCreatePlataform() {
     this.clearFieldsCreatePlataform();
     this.showDialogCreatePlataforms = false;
+    this.showDialogUpdatePlataform = false;
   }
 
   clearFieldsCreatePlataform() {
@@ -744,10 +802,10 @@ export class AdministrativoPageComponent {
 
     this.streamsService.registerPlataform(adapter).subscribe(res => {
       this.toastService.showToastSuccess("Registro de plataforma", "Plataforma adicionado com sucesso")
+      this.refreshTablePlataform()
       setTimeout(() => {
         this.isloading = false;
         this.showDialogCreatePlataforms = false
-        this.loadAllPlataforms()
       }, 1000);
     }, error => {
       if (error.error != null) {
@@ -756,6 +814,41 @@ export class AdministrativoPageComponent {
       } else {
         this.isloading = false;
         this.toastService.showToastError("Registro de plataforma", "Falha ao adicionar plataforma: Servidor com problemas");
+      }
+      console.log(error);
+      this.isloading = false;
+    })
+  }
+
+  updatePlataform() {
+    if (this.createPlataformForm.get('namePlataform')?.valid == false) {
+      this.toastService.showToastWarn("Campo inválido", "Informe um nome");
+      return
+    }
+
+    if (this.createPlataformForm.get('urlPlataform')?.valid == false) {
+      this.toastService.showToastWarn("Campo inválido", "Informe uma URL");
+      return
+    }
+    this.isloading = true;
+    let adapter = new PlataformsAdapter();
+    adapter.idPublic = this.plataformSelected.idPublic;
+    adapter.name = "" + this.createPlataformForm.get('namePlataform')?.value;
+    adapter.urlBase = "" + this.createPlataformForm.get('urlPlataform')?.value;
+    this.streamsService.updatePlataform(adapter).subscribe(res => {
+      this.toastService.showToastSuccess("Atualização de plataforma", "Plataforma atualizada com sucesso")
+      this.refreshTablePlataform()
+      setTimeout(() => {
+        this.isloading = false;
+        this.showDialogUpdatePlataform = false
+      }, 1000);
+    }, error => {
+      if (error.error != null) {
+        this.isloading = false;
+        this.toastService.showToastError(error.error.title, error.error.message);
+      } else {
+        this.isloading = false;
+        this.toastService.showToastError("Atualização de plataforma", "Falha ao atualizar plataforma: Servidor com problemas");
       }
       console.log(error);
       this.isloading = false;
@@ -816,14 +909,22 @@ export class AdministrativoPageComponent {
       } else {
         this.menuOptiontPlatformListItems.push({ label: "Ativar", command: () => this.setStatusPlataform(true, event) })
       }
-      this.menuOptiontPlatformListItems.push({ label: "Ediar", command: () => this.editPlatform() })
+      this.menuOptiontPlatformListItems.push({ label: "Editar", command: () => this.editPlatform() })
     }
 
     menuOptionSelectPlatformListItems.toggle(event)
   }
 
   editPlatform(): void {
-    throw new Error('Method not implemented.');
+    this.setFieldsPlataform();
+    this.showDialogUpdatePlataform = true;
+  }
+
+  setFieldsPlataform() {
+    this.createPlataformForm = this._formBuilder.group({
+      namePlataform: [this.plataformSelected.name, Validators.required],
+      urlPlataform: [this.plataformSelected.urlBase, [Validators.required]]
+    });
   }
 
   setStatusPlataform(active: boolean, event: any): void {
@@ -877,10 +978,403 @@ export class AdministrativoPageComponent {
 
   //Fim metodos para ggerenciamento de plataformas
 
-  //Inicio metodos para ggerenciamento de Formularios de agendamento
-  configSchedulePersonsInfo(){
-    this.allPersons.forEach(person=>{
-      
+  //Inicio metodos para gerenciamento de Formularios de agendamento
+  async configSchedulePersonsInfo() {
+    await this.loadLists();
+    this.makeMenuOptionSelectSchedulePersonListItems();
+  }
+
+  async loadLists() {
+    this.scheduleFormPerson = [];
+    this.scheduleFormPersonCompleted = [];
+    this.scheduleFormPersonUncompleted = [];
+    this.personsEnabled.forEach(person => {
+      let adapter = new PersonInsertUpdateAdapter()
+      adapter.idPublic = person.id;
+      this.schedulePersonService.getAllSchedulePersonByPerson(adapter).subscribe(res => {
+        if (res.length > 0) {
+          this.scheduleFormPersonCompleted.push({ person: person, schedules: res })
+        } else {
+          this.scheduleFormPersonUncompleted.push({ person: person, schedules: res })
+        }
+        this.scheduleFormPerson.push({ person: person, schedules: res });
+      }, error => {
+        if (error.error != null) {
+          this.toastService.showToastError(error.error.title, error.error.message);
+        } else {
+          this.toastService.showToastError("Registro de agenda de usuário", "Falha ao consultar agenda de usuário: Servidor com problemas");
+        }
+        console.log(error);
+      });
     })
+
+  }
+
+  makeMenuOptionSelectSchedulePersonListItems() {
+    this.menuOptionSelectSchedulePersonListItems = [
+      { label: "Todos", command: () => this.openListSchedulePerson(this.scheduleFormPerson, "todos") },
+      { label: "Preenchidos", command: () => this.openListSchedulePerson(this.scheduleFormPersonCompleted, "preenchidos") },
+      { label: "Não preenchidos", command: () => this.openListSchedulePerson(this.scheduleFormPersonUncompleted, "nao_preenchidos") }
+    ]
+  }
+
+  openListSchedulePerson(list: ScheduleFormPerson[], tipoLista: string) {
+    this.scheduleFormPersonToList = [];
+    this.typeListScheduleFormPersonSelected = tipoLista;
+    list.forEach(item => {
+      let status = "";
+      if (item.schedules.length > 0) {
+        status = "Preenchido"
+      } else {
+        status = "Não preenchido"
+      }
+      this.scheduleFormPersonToList.push({ name: item.person.name, username: item.person.user.username, status: status })
+    })
+    this.showDialogListSchedulePerson = true;
+  }
+
+  filterSchedulePersonList(e: any) {
+    this.listSchedulePersonFilter = e.target.value
+    return this.listSchedulePersonFilter;
+  }
+
+  async refreshTableSchedulePerson() {
+    this.refreshAll();
+    this.toastService.showToastInfo("Informação", "Atualizando tabela isso pode levar alguns segundos")
+    if (this.typeListPlatformSelected == "todos") {
+      this.openListSchedulePerson(this.scheduleFormPerson, this.typeListPlatformSelected)
+    }
+    if (this.typeListPlatformSelected == "preenchidos") {
+      this.openListSchedulePerson(this.scheduleFormPersonCompleted, this.typeListPlatformSelected)
+    }
+    if (this.typeListPlatformSelected == "nao_preenchidos") {
+      this.openListSchedulePerson(this.scheduleFormPersonUncompleted, this.typeListPlatformSelected)
+    }
+  }
+
+  openMenuTableSchedulePerson(event: any, menuOptiontSchedulePersonListItems: Menu, schedulePerson: any) {
+    console.log(schedulePerson);
+    this.menuOptiontSchedulePersonListItems = [];
+    let filter = this.scheduleFormPerson.find(f => f.person.name == (schedulePerson.name));
+
+    if (filter != undefined) {
+      this.scheduleFormPersonSelected = filter
+      this.menuOptiontSchedulePersonListItems.push({ label: "Visualizar", command: () => { this.visualizarSchedulePerson() }, disabled: filter.schedules.length == undefined || filter.schedules.length == 0 })
+    }
+    menuOptiontSchedulePersonListItems.toggle(event)
+  }
+
+  visualizarSchedulePerson() {
+    this.loadHorarios();
+    this.showDialogSchedulePerson = true
+  }
+
+  private loadHorarios() {
+    this.isloading = true;
+    this.resetHorarios();
+
+    this.scheduleFormPersonSelected.schedules.forEach(item => {
+      if (item.weekDay === "domingo") {
+        let horario = new HorariosModel()
+        horario.horario = item.hour
+        this.horariosDomingo.push(horario)
+      }
+      if (item.weekDay === "segunda") {
+        let horario = new HorariosModel()
+        horario.horario = item.hour
+        this.horariosSegunda.push(horario)
+      }
+      if (item.weekDay === "terca") {
+        let horario = new HorariosModel()
+        horario.horario = item.hour
+        this.horariosTerca.push(horario)
+      }
+      if (item.weekDay === "quarta") {
+        let horario = new HorariosModel()
+        horario.horario = item.hour
+        this.horariosQuarta.push(horario)
+      }
+      if (item.weekDay === "quinta") {
+        let horario = new HorariosModel()
+        horario.horario = item.hour
+        this.horariosQuinta.push(horario)
+      }
+      if (item.weekDay === "sexta") {
+        let horario = new HorariosModel()
+        horario.horario = item.hour
+        this.horariosSexta.push(horario)
+      }
+      if (item.weekDay === "sabado") {
+        let horario = new HorariosModel()
+        horario.horario = item.hour
+        this.horariosSabado.push(horario)
+      }
+    })
+    this.isloading = false;
+  }
+
+  private resetHorarios() {
+    this.horariosDomingo = [];
+    this.horariosSegunda = [];
+    this.horariosTerca = [];
+    this.horariosQuarta = [];
+    this.horariosQuinta = [];
+    this.horariosSexta = [];
+    this.horariosSabado = [];
+  }
+
+  async createSchedule() {
+    this.configCalendar()
+    this.getPresonsCamDoScehdule();
+    this.showDialogCreateSchedulesLive = true;
+    this.schedulesOfDayToDelete = []
+    this.schedulesOfDayToList = []
+  }
+
+  getPresonsCamDoScehdule() {
+    this.liveScheduleService.getAllPersonsCamDoLive(new Date()).subscribe(res => {
+      this.personsCanDoLive = res;
+      if (this.personsCanDoLive.length < 1) {
+        this.toastService.showToastWarn("Consulta de usuários", "Não foi encontrado nenhum usuário com permissão para agendar")
+      }
+    }, error => {
+      if (error.error != null) {
+        this.toastService.showToastError(error.error.title, error.error.message);
+      } else {
+        this.toastService.showToastError("Consulta de Usuários", "Falha ao consultar usuários: Servidor com problemas");
+      }
+      console.log(error);
+    })
+  }
+
+  configCalendar() {
+    this.minDate = DateUtilsService.getToday()
+    this.maxDate = DateUtilsService.plusDays(new Date(), 1)
+  }
+
+  selectDateScheduleBtn() {
+    if (!this.createScheduleLiveForm.get('dateOfScehdule')?.valid) {
+      return;
+    }
+    let dateSelected_ = this.createScheduleLiveForm.get('dateOfScehdule')?.value ?? undefined;
+    if (dateSelected_ == undefined) {
+      return;
+    }
+    this.dateSelected = DateUtilsService.dateToUnixTime(dateSelected_)
+    this.isloading = true;
+    this.selectedDate = DateUtilsService.DateToStringFormat(DateUtilsService.unixTimeToDate(this.dateSelected));
+    this.getAllSchedulesOfDaySelected(DateUtilsService.unixTimeToDate(this.dateSelected));
+    this.getAllSchedulesOfBeforeDaySelected(DateUtilsService.unixTimeToDate(this.dateSelected));
+  }
+
+  getAllSchedulesOfBeforeDaySelected(dateSelected: Date) {
+    let dateBefore = DateUtilsService.plusDays(dateSelected, -1);
+    this.liveScheduleService.getAllLiveSchedule(dateBefore).subscribe(res => {
+      this.isloading = false;
+      console.log(res);
+      this.schedulesOfBeforeDaySelected = res;
+    }, error => {
+      if (error.error != null) {
+        this.toastService.showToastError(error.error.title, error.error.message);
+      } else {
+        this.toastService.showToastError("Consulta de agenda", "Falha ao consultar Agenda: Servidor com problemas");
+      }
+      console.log(error);
+      this.isloading = false
+    });
+  }
+
+  getAllSchedulesOfDaySelected(dateSelected: Date) {
+    this.liveScheduleService.getAllLiveSchedule(dateSelected).subscribe(res => {
+      this.isloading = false;
+      console.log(res);
+      this.schedulesOfDaySelected = res;
+      this.createListTable();
+    }, error => {
+      if (error.error != null) {
+        this.toastService.showToastError(error.error.title, error.error.message);
+      } else {
+        this.toastService.showToastError("Consulta de agenda", "Falha ao consultar Agenda: Servidor com problemas");
+      }
+      console.log(error);
+      this.isloading = false
+    });
+  }
+
+  createListTable() {
+    this.schedulesOfDayToList = []
+    this.listHoursSchedule.forEach(hour => {
+      let filter: LiveScheduleAdapter = this.schedulesOfDaySelected.filter(filter => DateUtilsService.unixTimeToDate(filter.startTime).getHours() == Number.parseInt(hour))[0];
+      if (filter != undefined) {
+        this.schedulesOfDayToList.push({ username: filter.person.user.username, horario: hour })
+      }
+      else {
+        this.schedulesOfDayToList.push({ username: "Vago", horario: hour })
+      }
+    });
+  }
+
+  filterSchedulesOfDayToList(e: any) {
+    this.listScheduleOfDayToList = e.target.value
+    return this.listScheduleOfDayToList;
+  }
+
+  refreshTableUserSchedulesOfDayToList() {
+    this.createListTable()
+  }
+
+  cancelCreateScheduleBtn() {
+    this.createScheduleLiveForm = this._formBuilder.group({
+      dateOfScehdule: [new Date(), Validators.required],
+      streamerToSchedule: [new PersonResponseAdapter(), Validators.required]
+    });
+    this.schedulesOfDayToList = []
+    this.schedulesOfDayToDelete = []
+    this.selectedDate = "Não selecionado"
+    this.dateSelected = 0
+    this.showDialogCreateSchedulesLive = false;
+  }
+
+  createOrDeleteSchedule(schedule: any, event: any) {
+    if (schedule.username == "Vago") {
+      this.confirmationService.confirm({
+        target: event.target as EventTarget,
+        message: "Deseja Realizar um agendamento no horario: " + schedule.horario + "?",
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+          this.timeSelected = schedule.horario
+          this.showDialogRegisterSchedulesLiveForm = true;
+        },
+        reject: () => { this.toastService.showToastInfo("Confimação", "Operação cancelada") }
+      });
+    } else {
+      this.confirmationService.confirm({
+        target: event.target as EventTarget,
+        message: "Deseja remover o  streamer: " + schedule.username + " do horario " + schedule.horario + "?",
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+          this.removeSchedule(schedule);
+        },
+        reject: () => { this.toastService.showToastInfo("Confimação", "Operação cancelada") }
+      })
+    }
+  }
+
+  removeSchedule(schedule: any) {
+    let date_start = DateUtilsService.unixTimeToDate(this.dateSelected)
+    let timeSelectedInt = Number.parseInt(schedule.horario);
+    let startTime = date_start.setHours(timeSelectedInt, 0, 0, 0)
+    let filter = this.schedulesOfDaySelected.findIndex(find => find.startTime == startTime && find.person.user.username);
+    if (filter == undefined) {
+      this.toastService.showToastWarn("Falha ao remover agendamento", "não foi possivel encontrar streamer");
+      return;
+    }
+    this.schedulesOfDayToDelete.push(this.schedulesOfDaySelected[filter]);
+    this.schedulesOfDaySelected.splice(filter, 1);
+    this.createListTable()
+  }
+
+  saveNewSchedule(event: any) {
+    let streamer: PersonResponseAdapter = this.createScheduleLiveForm.get('streamerToSchedule')?.value ?? new PersonResponseAdapter();
+    if (streamer.id == undefined || streamer.id.length < 1) {
+      this.toastService.showToastWarn("Falha ao registrar agendamento", "O streamer deve ser selecionado");
+      return;
+    }
+
+    if (this.schedulesOfBeforeDaySelected.filter(filter => filter.person.id == streamer.id).length > 0
+      || this.schedulesOfDaySelected.filter(filter => filter.person.id == streamer.id).length > 0) {
+      this.confirmationService.confirm({
+        target: event.target as EventTarget,
+        message: "O Streamer " + streamer.user.username + ", já tem uma agendamento entre a data anterior e a data atual selecionada, Deseja agenda-lo mesmo assim?",
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+          this.registerSchedule(streamer)
+        },
+        reject: () => { this.toastService.showToastInfo("Confimação", "Operação cancelada") }
+      })
+
+    } else {
+      this.registerSchedule(streamer);
+    }
+  }
+
+  private registerSchedule(streamer: PersonResponseAdapter) {
+    let newSchedule = new LiveScheduleAdapter()
+    let timeSelectedInt = Number.parseInt(this.timeSelected);
+    let date_start = DateUtilsService.unixTimeToDate(this.dateSelected)
+    let date_end = DateUtilsService.unixTimeToDate(this.dateSelected)
+    let startTime = date_start.setHours(timeSelectedInt, 0, 0, 0)
+    let endTime = date_end.setHours(timeSelectedInt + 1, 0, 0, 0)
+
+    newSchedule.person = streamer;
+    newSchedule.endTime = endTime
+    newSchedule.startTime = startTime;
+    newSchedule.date = startTime;
+
+    this.schedulesOfDaySelected.push(newSchedule);
+    this.createListTable()
+    this.cancelNewSchedule()
+  }
+
+  cancelNewSchedule() {
+    this.showDialogRegisterSchedulesLiveForm = false
+    this.timeSelected = "";
+    this.createScheduleLiveForm.get('streamerToSchedule')?.setValue(new PersonResponseAdapter());
+  }
+
+  confirmNewSchedule(event: any) {
+    this.isloading = true;
+    if (this.schedulesOfDayToDelete.length > 0) {
+      this.liveScheduleService.deleteLiveSchedule(this.schedulesOfDayToDelete).subscribe(res => {
+        this.liveScheduleService.registerLiveSchedule(this.schedulesOfDaySelected).subscribe(res => {
+          this.toastService.showToastSuccess("Agendamento", "Agendamento realizado com sucesso")
+          console.log(res);
+          this.createSchedule()
+          this.cancelNewSchedule();
+          this.cancelCreateScheduleBtn()
+          setTimeout(() => {
+            this.isloading = false;
+            this.showDialogCreateSchedulesLive = false;
+          }, 1000);
+        }, error => {
+          if (error.error != null) {
+            this.toastService.showToastError(error.error.title, error.error.message);
+          } else {
+            this.toastService.showToastError("Registro de agendamento", "Falha ao Agendar: Servidor com problemas");
+          }
+          this.isloading = false;
+          console.log(error);
+        })
+      }, error => {
+        if (error.error != null) {
+          this.toastService.showToastError(error.error.title, error.error.message);
+        } else {
+          this.toastService.showToastError("Registro de agendamento", "Falha ao Agendar: Servidor com problemas");
+        }
+        this.isloading = false;
+        console.log(error);
+      })
+      return;
+    } else {
+      this.liveScheduleService.registerLiveSchedule(this.schedulesOfDaySelected).subscribe(res => {
+        this.toastService.showToastSuccess("Agendamento", "Agendamento realizado com sucesso")
+        console.log(res);
+        this.createSchedule()
+        this.cancelNewSchedule();
+        this.cancelCreateScheduleBtn()
+        setTimeout(() => {
+          this.isloading = false;
+          this.showDialogCreateSchedulesLive = false;
+        }, 1000);
+      }, error => {
+        if (error.error != null) {
+          this.toastService.showToastError(error.error.title, error.error.message);
+        } else {
+          this.toastService.showToastError("Registro de agendamento", "Falha ao Agendar: Servidor com problemas");
+        }
+        this.isloading = false;
+        console.log(error);
+      })
+    }
   }
 }

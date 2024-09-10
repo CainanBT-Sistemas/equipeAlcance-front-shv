@@ -41,6 +41,7 @@ import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { ConfirmPopupModule } from 'primeng/confirmpopup';
+import { DropdownModule } from 'primeng/dropdown';
 
 
 
@@ -107,6 +108,7 @@ import { AdministrativoPageComponent } from './pages/private/admin/administrativ
     SkeletonModule,
     TableModule,
     ConfirmPopupModule,
+    DropdownModule,
     
   ],exports: [
     BrowserModule,
@@ -146,6 +148,7 @@ import { AdministrativoPageComponent } from './pages/private/admin/administrativ
     SkeletonModule,
     TableModule,
     ConfirmPopupModule,
+    DropdownModule,
   ],
   providers: [
     ConfirmationService,

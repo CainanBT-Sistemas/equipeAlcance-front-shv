@@ -3,19 +3,90 @@
         position: absolute;
         width: 100%;
 
+        .StreamList .p-dialog {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+
+            .p-dialog-content {
+                .p-datatable {
+                    .p-datatable-header {
+                        width: 100%;
+
+                        .p-button {
+                            margin-left: 2%;
+                        }
+                    }
+
+                }
+            }
+        }
+
+        .StreamRegister .p-dialog {
+            position: relative;
+            width: 100%;
+            height: 100%;
+
+            .p-dialog-content {
+                width: 100%;
+
+                .p-float-label {
+                    margin-top: 2%;
+                    position: relative;
+                    width: 100%;
+                }
+
+                .p-inputtext {
+                    position: relative;
+                    width: 100%;
+                }
+
+                .p-dropdown {
+                    position: relative;
+                    width: 100%;
+                }
+
+            }
+
+            .p-dialog-footer {
+                position: relative;
+                width: 100%;
+                border: 0;
+
+                .btnCancelar .p-button {
+                    width: 100%;
+                    background-color: #2f3335;
+                    color: #fff;
+                    border: 0;
+                }
+
+                .btnCadastrar .p-button {
+                    background-color: #0a1c29;
+                    color: #fff;
+                    width: 100%;
+                    border: 0;
+                    margin-bottom: 2%;
+                }
+            }
+        }
+
         .p-accordion {
             position: relative;
             margin-top: 2%;
+
             .p-accordion-tab {
                 .p-toggleable-content {
                     .inline {
                         display: flex;
                         flex-direction: row;
-                        .ng-star-inserted{
+
+                        .ng-star-inserted {
                             margin: 0.8%;
                         }
                     }
-                    .footer{
+
+                    .footer {
                         margin-top: 3%;
                     }
                 }
