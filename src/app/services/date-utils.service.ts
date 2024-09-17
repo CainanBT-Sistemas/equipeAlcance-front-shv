@@ -17,18 +17,23 @@ export class DateUtilsService {
   }
 
   public static getToday(): Date {
-    console.log(new Date());
     return new Date()
   }
 
   public static plusDays(date: Date, numberDays: number): Date {
-    ;
-    date.setHours(0, 0, 0, 0);
+    date = this.setHours(date, 0)
     let datePlused: Date = new Date(date.setDate(date.getDate() + numberDays))
     return datePlused
   }
 
-  public static DateToStringFormat(date: Date): string {
+  public static setHours(date: Date, hour: number): Date {
+    return new Date(date.setHours(hour, 0, 0, 0));
+  }
+
+  public static DateToStringFormatDate(date: Date): string {
     return date.toLocaleDateString()
+  }
+  public static DateToStringFormatTime(date: Date): string {
+    return date.toLocaleTimeString()
   }
 }

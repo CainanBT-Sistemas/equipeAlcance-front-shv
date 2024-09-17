@@ -17,8 +17,6 @@ export class PersonService {
   ) { }
 
   encript(arg0: string): string {
-    console.log(arg0);
-
     return btoa(arg0);
   }
 

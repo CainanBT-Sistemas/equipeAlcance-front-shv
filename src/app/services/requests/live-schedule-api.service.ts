@@ -35,6 +35,11 @@ export class LiveScheduleApiService {
     return this.client.get<LiveScheduleAdapter[]>(this.baseUrl.concat("/AllLiveSchedule/").concat(day.toString()), { headers: this.header })
   }
 
+  public getAllLiveSchedulePeriodPerson(start: number, end: number, person:PersonResponseAdapter) {
+    this.header = this.getHeader()
+    return this.client.put<LiveScheduleAdapter[]>(this.baseUrl.concat("/AllLiveSchedule/period/").concat(start.toString().concat("/".concat(end.toString()))), person, { headers: this.header })
+  }
+
   private getHeader(): HttpHeaders {
     if (GlobalService.personLogged()) {
       return new HttpHeaders({ "Content-Type": "application/json", "Authorization": "Bearer ".concat(GlobalService.getPerson().user.token) });

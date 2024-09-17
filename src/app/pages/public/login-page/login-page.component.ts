@@ -6,6 +6,7 @@ import { AuthService } from '../../../services/auth.service';
 import { PersonService } from '../../../services/person.service';
 import { UserLoginAdapter } from '../../../modules/person/adapters/UserLoginAdapter';
 import { GlobalService } from '../../../services/global.service';
+import { ServerService } from '../../../services/server.service';
 
 @Component({
   selector: 'app-login-page',
@@ -20,8 +21,9 @@ export class LoginPageComponent {
     private route: Router,
     private _formBuilder: FormBuilder,
     private toast: ToastService,
-    private personService:PersonService
-  ){
+    private personService: PersonService,
+    private serverService: ServerService,
+  ) {
 
   }
 
@@ -31,7 +33,7 @@ export class LoginPageComponent {
   });
 
 
-  login(){
+  login() {
     if (this.loginForm.get('username')?.valid == false) {
       this.toast.showToastWarn("Campo inválido", "Informe seu username");
       return;
@@ -46,14 +48,21 @@ export class LoginPageComponent {
     user.password = this.personService.encript("" + (this.loginForm.get('password')?.value));
 
     this.personService.auth(user).subscribe(response => {
-      this.toast.showToastSuccess("Login de usuário", "Login feito com sucesso");
-      console.log(response);      
-      setTimeout(() => {
-        GlobalService.setPerson(response)
-        this.route.navigate(['/app'])
+      this.serverService.serverIsOnline().subscribe(responseServer => {
+        this.toast.showToastSuccess("Login de usuário", "Login feito com sucesso");
+        setTimeout(() => {
+          GlobalService.setPerson(response)
+          this.route.navigate(['/app'])
+          this.isloading = false;
+        }, 1000);
+      }, error => {
+        if (error.status == 0) {
+          this.toast.showToastError("Falha com o servidor", "Opa, parece que o servidor da equipe alcance está fora do ar");
+        } else {
+          console.log(error);
+        }
         this.isloading = false;
-
-      }, 1000);
+      })
     }, error => {
       if (error.error.code != null) {
         this.toast.showToastError(error.error.title, error.error.message);
@@ -65,7 +74,7 @@ export class LoginPageComponent {
     })
   }
 
-  register(){
+  register() {
     this.route.navigate(['register'])
   }
 }

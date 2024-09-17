@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { LiveScheduleApiService } from './requests/live-schedule-api.service';
 import { LiveScheduleAdapter } from '../modules/live-schedule/LiveScheduleAdapter';
 import { DateUtilsService } from './date-utils.service';
+import { PersonResponseAdapter } from '../modules/person/adapters/PersonResponseAdapter';
 
 @Injectable({
   providedIn: 'root'
@@ -27,6 +28,9 @@ export class LiveScheduleService {
   public getAllLiveSchedule(date: Date) {
     let day = DateUtilsService.dateToUnixTime(date);
     return this.api.getAllLiveSchedule(day)
+  }
 
+  public getAllLiveSchedulePeriodPerson(start: number, end:number, person:PersonResponseAdapter) {
+    return this.api.getAllLiveSchedulePeriodPerson(start, end,person)
   }
 }

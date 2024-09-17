@@ -1162,7 +1162,7 @@ export class AdministrativoPageComponent {
     }
     this.dateSelected = DateUtilsService.dateToUnixTime(dateSelected_)
     this.isloading = true;
-    this.selectedDate = DateUtilsService.DateToStringFormat(DateUtilsService.unixTimeToDate(this.dateSelected));
+    this.selectedDate = DateUtilsService.DateToStringFormatDate(DateUtilsService.unixTimeToDate(this.dateSelected));
     this.getAllSchedulesOfDaySelected(DateUtilsService.unixTimeToDate(this.dateSelected));
     this.getAllSchedulesOfBeforeDaySelected(DateUtilsService.unixTimeToDate(this.dateSelected));
   }
