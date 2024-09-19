@@ -13,13 +13,15 @@ export class SchedulePersonService {
     private api: SchedulePersonApiService,
   ) { }
 
-  public getAllSchedulePersonByPerson(){
-    let person: PersonInsertUpdateAdapter = new PersonInsertUpdateAdapter();
-    person.idPublic = GlobalService.getPerson().id
+  public getAllSchedulePersonByPerson(person?: PersonInsertUpdateAdapter) {
+    if (person == undefined || person.idPublic == undefined) {
+      person = new PersonInsertUpdateAdapter();
+      person.idPublic = GlobalService.getPerson().id
+    }
     return this.api.getAllSchedulePersonByPerson(person);
   }
 
-  public registerSchedulePerson(schedulesPersonInsertUpdateAdapter: SchedulePersonInsertUpdateAdapter[]){
+  public registerSchedulePerson(schedulesPersonInsertUpdateAdapter: SchedulePersonInsertUpdateAdapter[]) {
     return this.api.registerSchedulePerson(schedulesPersonInsertUpdateAdapter);
   }
 

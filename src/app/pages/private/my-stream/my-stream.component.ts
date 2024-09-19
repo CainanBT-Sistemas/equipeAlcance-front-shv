@@ -7,6 +7,13 @@ import { HorariosModel } from '../../../modules/utils/horariosModel';
 import { SchedulePersonResponseAdapter } from '../../../modules/schedule-person/adapters/SchedulePersonResponseAdapter';
 import { SchedulePersonInsertUpdateAdapter } from '../../../modules/schedule-person/adapters/SchedulePersonInsertUpdateAdapter';
 import { ToastService } from '../../../components/toast.service';
+import { FormBuilder, Validators } from '@angular/forms';
+import { PlataformsAdapter } from '../../../modules/streams/adapters/PlataformsAdapter';
+import { StreamsInsertUpdateAdapter } from '../../../modules/streams/adapters/StreamsInsertUpdateAdapter';
+import { PersonInsertUpdateAdapter } from '../../../modules/person/adapters/PersonInsertUpdateAdapter';
+import { MenuItem } from 'primeng/api';
+import { StreamsResponseAdapter } from '../../../modules/streams/adapters/StreamsResponseAdapter';
+import { Menu } from 'primeng/menu';
 
 @Component({
   selector: 'app-my-stream',
@@ -17,14 +24,26 @@ export class MyStreamComponent {
 
   showDialogSchedulePerson = false;
   showDialogStreamPerson = false;
+  showDialogRegisterStream = false;
+  showDialogListStream = false;
+  isloading = false;
+  isEdit = false;
+
+  menuOptiontSchedulePersonListItems: MenuItem[] = []
+
   msgSchedulePerson = ""
   msgStreamPerson = ""
   msgBtnSchedulePerson = "";
   msgBtnStreamPerson = "";
-  isloading = false;
+  filteredListStreams = ""
+
+  txtBtnRegisterTransmissao = ""
 
   schedulePersonResponseAdapter: SchedulePersonResponseAdapter[] = new Array<SchedulePersonResponseAdapter>();
+  streamSelected: StreamsResponseAdapter = new StreamsResponseAdapter();
 
+  plataformList: PlataformsAdapter[] = []
+  streamsToList: any[] = [];
   horariosDomingo: HorariosModel[] = [];
   horariosSegunda: HorariosModel[] = [];
   horariosTerca: HorariosModel[] = [];
@@ -34,7 +53,15 @@ export class MyStreamComponent {
   horariosSabado: HorariosModel[] = [];
   Horarios: HorariosModel[] = [];
 
+  allStreams: StreamsResponseAdapter[] = [];
+
+  registerStreamForm = this._formBuilder.group({
+    chanel: ['', Validators.required],
+    plataform: [new PlataformsAdapter(), Validators.required]
+  })
+
   constructor(
+    private _formBuilder: FormBuilder,
     private route: Router,
     private schedulePersonService: SchedulePersonService,
     private streamsService: StreamsService,
@@ -146,8 +173,9 @@ export class MyStreamComponent {
         this.msgStreamPerson = "Nenhuma Stream registrada, registre a sua stream para continuar a utilizar o sistema."
         this.msgBtnStreamPerson = "Criar Stream";
       } else {
+        this.allStreams = res;
         this.msgStreamPerson = "Stream já registrada, caso deseja atualizar é só clicar no botão abaixo."
-        this.msgBtnStreamPerson = "Editar Stream"
+        this.msgBtnStreamPerson = "Listar Streams"
       }
     }, error => {
       if (error.error != null) {
@@ -164,11 +192,106 @@ export class MyStreamComponent {
   }
 
   criarStreamPerson() {
+    if (this.isEdit) {
+      this.txtBtnRegisterTransmissao = "Atualizar"
+      this.registerStreamForm = this._formBuilder.group({
+        chanel: [this.streamSelected.channel, Validators.required],
+        plataform: [this.streamSelected.plataformsAdapter, Validators.required]
+      });
+      this.showDialogRegisterStream = true;
+    } else {
+      this.txtBtnRegisterTransmissao = "Cadastrar"
+      if (this.msgBtnStreamPerson == "Listar Streams") {
+        this.createStreamToList();
+        this.showDialogListStream = true;
+      } else {
+        this.showDialogRegisterStream = true;
+      }
+    }
 
+    this.streamsService.findAllStreamsPlataforms().subscribe(res => {
+      this.plataformList = res;
+    }, error => {
+      if (error.error != null) {
+        this.toastService.showToastError(error.error.title, error.error.message);
+      } else {
+        this.toastService.showToastError("Consulta de plataformas", "Falha ao consultar plataformas: Servidor com problemas");
+      }
+      console.log(error);
+    })
+    if (this.msgBtnStreamPerson == "Listar Streams") {
+      this.createStreamToList();
+      this.showDialogListStream = true;
+    } else {
+      this.showDialogRegisterStream = true;
+    }
+  }
+
+  createStreamToList() {
+    this.streamsToList = []
+    this.allStreams.forEach(item => {
+      this.streamsToList.push({ channel: item.channel, link: item.plataformsAdapter.urlBase + item.channel })
+    })
   }
 
   saveFormStream() {
+    if (this.registerStreamForm.get('chanel')?.valid == false) {
+      this.toastService.showToastWarn("Campo inválido", "Informe o nome do seu canal");
+      return
+    }
+    if (this.registerStreamForm.get('plataform')?.valid == false) {
+      this.toastService.showToastWarn("Campo inválido", "Selecione uma plataforma");
+      return
+    }
+    let adapter = new StreamsInsertUpdateAdapter()
+    let chanel = this.registerStreamForm.get('chanel')?.value
+    let platform = this.registerStreamForm.get('plataform')?.value
+    let person = new PersonInsertUpdateAdapter()
+    person.idPublic = GlobalService.getPerson().id;
+    adapter.person = person;
+    if (chanel != undefined) {
+      adapter.channel = chanel
+    }
+    if (platform != undefined) {
+      adapter.plataform = platform
+    }
+    if (this.isEdit) {
+      adapter.idPublic = this.streamSelected.idPublic;
+      this.streamsService.updateStreams(adapter).subscribe(res => {
+        this.toastService.showToastSuccess("Atualização de stream", "Stream Atualizada com sucesso!")
+        this.refreshTableStreams()
+        setTimeout(() => {
+          this.cancelRegisterStream();
+          this.checkFirstAccesss()
+        }, 1000);
 
+      }, error => {
+        if (error.error.code != null) {
+          this.toastService.showToastError(error.error.title, error.error.message);
+        } else {
+          this.toastService.showToastError("Atualização de stream", "Falha ao Atualizar sua stream: Servidor com problemas");
+        }
+        console.log(error);
+        this.isloading = false;
+      })
+    } else {
+      this.streamsService.registerStreams(adapter).subscribe(res => {
+        this.toastService.showToastSuccess("Registro de stream", "Stream cadastrada com sucesso!")
+        setTimeout(() => {
+          this.cancelRegisterStream();
+          this.checkFirstAccesss()
+        }, 1000);
+
+      }, error => {
+        if (error.error.code != null) {
+          this.toastService.showToastError(error.error.title, error.error.message);
+        } else {
+          this.toastService.showToastError("Registro de stream", "Falha ao Salvar sua stream: Servidor com problemas");
+        }
+        console.log(error);
+        this.isloading = false;
+      })
+    }
   }
 
   saveFormSChedulePerson() {
@@ -226,7 +349,7 @@ export class MyStreamComponent {
     })
     this.schedulePersonService.registerSchedulePerson(schedulesPersonInsert).subscribe(result => {
       console.log(result);
-      this.toastService.showToastSuccess("Formulário de Horários","Seu formulário de Horarios foi Salvo com sucesso")
+      this.toastService.showToastSuccess("Formulário de Horários", "Seu formulário de Horarios foi Salvo com sucesso")
       this.showDialogSchedulePerson = false;
       this.checkFirstAccesss();
       this.isloading = false;
@@ -241,4 +364,62 @@ export class MyStreamComponent {
     });
   }
 
+  cancelRegisterStream() {
+    this.registerStreamForm = this._formBuilder.group({
+      chanel: ['', Validators.required],
+      plataform: [new PlataformsAdapter(), Validators.required]
+    });
+    this.showDialogRegisterStream = false;
+    if (this.isEdit) {
+      this.isEdit = false;
+    }
+  }
+
+  filterStreamsList(e: any) {
+    this.filteredListStreams = e.target.value
+    return this.filteredListStreams;
+  }
+
+  refreshTableStreams() {
+    this.toastService.showToastInfo("Informação", "Atualizando tabela isso pode levar alguns segundos");
+    this.allStreams = []
+    this.streamsToList = []
+    this.streamsService.getAllStreamsByPerson().subscribe(res => {
+      this.allStreams = res;
+      this.createStreamToList()
+    }, error => {
+      if (error.error != null) {
+        this.toastService.showToastError(error.error.title, error.error.message);
+      } else {
+        this.toastService.showToastError("Registro de Stream de usuário", "Falha ao consultar Streans de usuário: Servidor com problemas");
+      }
+      console.log(error);
+    })
+  }
+
+  openMenuTableStreams(event: any, menu: Menu, stream: any) {
+    this.menuOptiontSchedulePersonListItems = []
+    let filter = this.allStreams.find(f => f.channel == stream.channel);
+    if (filter != undefined) {
+      this.streamSelected = filter;
+      this.menuOptiontSchedulePersonListItems.push({ label: "Abrir link", command: () => { window.open(stream.link, '_blank') } })
+      this.menuOptiontSchedulePersonListItems.push({ label: "Editar", command: () => { this.openEditStream() } })
+      this.menuOptiontSchedulePersonListItems.push({ label: "Deletar", command: () => { this.deleteStream() } })
+    }
+    menu.toggle(event)
+  }
+
+  openEditStream() {
+    this.isEdit = true;
+    this.criarStreamPerson();
+  }
+
+  deleteStream() {
+    let adapter = new StreamsInsertUpdateAdapter();
+    adapter.idPublic = this.streamSelected.idPublic;
+    this.streamsService.deleteStreams(adapter).subscribe(res => {
+      this.toastService.showToastSuccess("Exclusão de stream", "Stream deletada com sucesso");
+      this.refreshTableStreams();
+    });
+  }
 }

@@ -1,3 +1,5 @@
+import { ScheduleFormPerson } from './../../../../modules/schedule-person/adapters/ScheduleFormPerson';
+import { PlataformsAdapter } from './../../../../modules/streams/adapters/PlataformsAdapter';
 import { PersonResponseAdapter } from './../../../../modules/person/adapters/PersonResponseAdapter';
 import { ToastService } from './../../../../components/toast.service';
 import { Component } from '@angular/core';
@@ -10,6 +12,14 @@ import { PersonInsertUpdateAdapter } from '../../../../modules/person/adapters/P
 import { UserLoginAdapter } from '../../../../modules/person/adapters/UserLoginAdapter';
 import { UserDeleteOrBlockAdapter } from '../../../../modules/person/adapters/UserDeleteOrBlockAdapter';
 import { PersonDeleteAdapter } from '../../../../modules/person/adapters/PersonDeleteAdapter';
+import { StreamsService } from '../../../../services/streams.service';
+import { SchedulePersonService } from '../../../../services/schedule-person.service';
+import { SchedulePersonResponseAdapter } from '../../../../modules/schedule-person/adapters/SchedulePersonResponseAdapter';
+import { HorariosModel } from '../../../../modules/utils/horariosModel';
+import { LiveScheduleService } from '../../../../services/live-schedule.service';
+import { LiveScheduleAdapter } from '../../../../modules/live-schedule/LiveScheduleAdapter';
+import { DateUtilsService } from '../../../../services/date-utils.service';
+import { filter } from 'rxjs';
 
 @Component({
   selector: 'app-administrativo-page',
@@ -40,26 +50,94 @@ export class AdministrativoPageComponent {
     rePassword: ['', Validators.required]
   });
 
+  createPlataformForm = this._formBuilder.group({
+    namePlataform: ['', Validators.required],
+    urlPlataform: ['', [Validators.required]]
+  });
+
+  createScheduleLiveForm = this._formBuilder.group({
+    dateOfScehdule: [new Date(), Validators.required],
+    streamerToSchedule: [new PersonResponseAdapter(), Validators.required]
+  });
+
   allPersons: PersonResponseAdapter[] = []
   personsEnabled: PersonResponseAdapter[] = []
   personsDisabled: PersonResponseAdapter[] = []
   personsDeleted: PersonResponseAdapter[] = []
   personsAdm: PersonResponseAdapter[] = []
   menuOptionUserListitems: MenuItem[] = [];
+  menuOptiontPlatformListItems: MenuItem[] = [];
+  menuOptiontSchedulePersonListItems: MenuItem[] = [];
   menuOptionSelectUserListItems: MenuItem[] = [];
+  menuOptionSelectPlatformListItems: MenuItem[] = [];
+  menuOptionSelectSchedulePersonListItems: MenuItem[] = [];
   personsToList: any[] = []
   personSelected = new PersonResponseAdapter();
+
+  allPlataforms: PlataformsAdapter[] = []
+  enabledPlataforms: PlataformsAdapter[] = []
+  desenabledPlataforms: PlataformsAdapter[] = []
+  plataformsToList: any[] = []
+  plataformSelected = new PlataformsAdapter();
+
+  scheduleFormPerson: ScheduleFormPerson[] = []
+  scheduleFormPersonCompleted: ScheduleFormPerson[] = []
+  scheduleFormPersonUncompleted: ScheduleFormPerson[] = []
+  scheduleFormPersonToList: any[] = []
+  scheduleFormPersonSelected: ScheduleFormPerson = new ScheduleFormPerson();
+
+  personsCanDoLive: PersonResponseAdapter[] = [];
+  schedulesOfDaySelected: LiveScheduleAdapter[] = []
+  schedulesOfDayToDelete: LiveScheduleAdapter[] = []
+  schedulesOfBeforeDaySelected: LiveScheduleAdapter[] = []
+  preSchedule: LiveScheduleAdapter[] = []
+  schedulesOfDayToList: any[] = []
+  dateSelected: number = 0;
 
   showDialogListUsers = false;
   showDialogUpdateUser = false;
   showDialogCreateUser = false
+  showDialogCreatePlataforms = false;
+  showDialogUpdatePlataform = false;
+  showDialogListPlataform = false
+  showDialogListSchedulePerson = false
+  showDialogSchedulePerson = false
+  showDialogCreateSchedulesLive = false
+  showDialogRegisterSchedulesLiveForm = false
+
+
 
   listUserFilter: string = ""
-  typeListSelected = ""
+  listPlataformFilter: string = ""
+  listSchedulePersonFilter: string = ""
+  listScheduleOfDayToList: string = ""
+  typeListUserSelected = ""
+  typeListPlatformSelected = ""
+  typeListScheduleFormPersonSelected = ""
+  selectedDate = "Não selecionado"
+  timeSelected: string = ""
+
+  horariosDomingo: HorariosModel[] = [];
+  horariosSegunda: HorariosModel[] = [];
+  horariosTerca: HorariosModel[] = [];
+  horariosQuarta: HorariosModel[] = [];
+  horariosQuinta: HorariosModel[] = [];
+  horariosSexta: HorariosModel[] = [];
+  horariosSabado: HorariosModel[] = [];
+  listHoursSchedule: string[] = [
+    "00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11",
+    "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23",
+  ]
+  minDate: Date | undefined;
+  maxDate: Date | undefined;
+
 
   constructor(
     private _formBuilder: FormBuilder,
     private personService: PersonService,
+    private streamsService: StreamsService,
+    private schedulePersonService: SchedulePersonService,
+    private liveScheduleService: LiveScheduleService,
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
   ) {
@@ -67,10 +145,21 @@ export class AdministrativoPageComponent {
   }
 
   ngOnInit(): void {
+    this.configUsersInfo()
+    this.configPlataformsInfo()
+  }
+
+  refreshAll() {
+    this.configUsersInfo();
+    this.configPlataformsInfo()
+  }
+
+  //Inicio metodos para gerenciamento de Usuario
+
+  configUsersInfo() {
     this.loadPersonsInfo()
     this.createMenuSelectListUser()
   }
-  //Inicio inicialização basica
 
   loadPersonsInfo() {
     this.loadAllPersons();
@@ -86,7 +175,6 @@ export class AdministrativoPageComponent {
   async loadAllPersons() {
     this.clearAllListPersons();
     this.personService.getAll().subscribe(res => {
-      console.log(res);
       this.allPersons = res;
       this.getQuantityTypePersons()
     }, error => {
@@ -144,6 +232,7 @@ export class AdministrativoPageComponent {
           this.personsEnabled.push(item)
         }
       })
+      this.configSchedulePersonsInfo();
     }
   }
 
@@ -156,10 +245,6 @@ export class AdministrativoPageComponent {
       { label: "Administradores", command: () => { this.openListaUsuarios(this.personsAdm, 'Administradores') } }
     ]
   }
-
-  //Fim inicialização basica
-
-  //Inicio metodos para gerenciamento de Usuario
 
   openListaUsuarios(persons: PersonResponseAdapter[], tipoLista: string): void {
     this.personsToList = []
@@ -179,12 +264,13 @@ export class AdministrativoPageComponent {
       }
       this.personsToList.push({ username: item.user.username, name: item.name, status: status, block: block, typeUser: item.user.role.roleName })
     })
-    this.typeListSelected = tipoLista;
+    this.typeListUserSelected = tipoLista;
     this.showDialogListUsers = true;
 
   }
 
-  async refreshTable() {
+  async refreshTableUser() {
+    this.refreshAll()
     this.personsToList = []
     this.toastService.showToastInfo("Informação", "Atualizando tabela isso pode levar alguns segundos")
     this.clearAllListPersons();
@@ -196,38 +282,32 @@ export class AdministrativoPageComponent {
           if (item.user.blocked == false) {
             this.personsEnabled.push(item)
           }
-        })
-        this.allPersons.forEach(item => {
-          if (item.user.deleted == true) {
+          if (item.user.blocked == true) {
             this.personsDisabled.push(item)
           }
-        })
-        this.allPersons.forEach(item => {
           if (item.user.deleted == true) {
             this.personsDeleted.push(item)
           }
-        })
-        this.allPersons.forEach(item => {
           if (item.user.role.roleName === "admin") {
             this.personsAdm.push(item)
           }
         })
-
+        this.configSchedulePersonsInfo();
         this.personsToList = []
-        if (this.typeListSelected == "Todos") {
-          this.openListaUsuarios(this.allPersons, this.typeListSelected)
+        if (this.typeListUserSelected == "Todos") {
+          this.openListaUsuarios(this.allPersons, this.typeListUserSelected)
         }
-        if (this.typeListSelected == "Ativos") {
-          this.openListaUsuarios(this.personsEnabled, this.typeListSelected)
+        if (this.typeListUserSelected == "Ativos") {
+          this.openListaUsuarios(this.personsEnabled, this.typeListUserSelected)
         }
-        if (this.typeListSelected == "Bloqueados") {
-          this.openListaUsuarios(this.personsDisabled, this.typeListSelected)
+        if (this.typeListUserSelected == "Bloqueados") {
+          this.openListaUsuarios(this.personsDisabled, this.typeListUserSelected)
         }
-        if (this.typeListSelected == "Deletados") {
-          this.openListaUsuarios(this.personsDeleted, this.typeListSelected)
+        if (this.typeListUserSelected == "Deletados") {
+          this.openListaUsuarios(this.personsDeleted, this.typeListUserSelected)
         }
-        if (this.typeListSelected == "Administradores") {
-          this.openListaUsuarios(this.personsAdm, this.typeListSelected)
+        if (this.typeListUserSelected == "Administradores") {
+          this.openListaUsuarios(this.personsAdm, this.typeListUserSelected)
         }
 
       }
@@ -303,6 +383,7 @@ export class AdministrativoPageComponent {
         if (disabled) {
           this.personService.deletePerson(personDelete).subscribe(res => {
             this.toastService.showToastSuccess("Exclusão de usuário", "Usuário excluido com sucesso")
+            this.refreshTableUser()
           }, error => {
             if (error.error != null) {
               this.toastService.showToastError(error.error.title, error.error.message);
@@ -314,6 +395,7 @@ export class AdministrativoPageComponent {
         } else {
           this.personService.recoverPerson(personDelete).subscribe(res => {
             this.toastService.showToastSuccess("Recuperaçao de usuário", "Usuário recuperado com sucesso")
+            this.refreshTableUser()
           }, error => {
             if (error.error != null) {
               this.toastService.showToastError(error.error.title, error.error.message);
@@ -347,6 +429,7 @@ export class AdministrativoPageComponent {
         if (blocked) {
           this.personService.blockPerson(user).subscribe(res => {
             this.toastService.showToastSuccess("Bloqueio de usuário", "Usuário bloqueado com sucesso")
+            this.refreshTableUser()
           }, error => {
             if (error.error != null) {
               this.toastService.showToastError(error.error.title, error.error.message);
@@ -358,6 +441,7 @@ export class AdministrativoPageComponent {
         } else {
           this.personService.unblockPerson(user).subscribe(res => {
             this.toastService.showToastSuccess("Desbloqueio de usuário", "Usuário desbloqueado com sucesso")
+            this.refreshTableUser()
           }, error => {
             if (error.error != null) {
               this.toastService.showToastError(error.error.title, error.error.message);
@@ -374,14 +458,14 @@ export class AdministrativoPageComponent {
 
   setTypeUser(typeUser: number, event: any): void {
     let messageConfirm = "";
-    let userRole = ""
+    let userRoleCode = 1
     if (typeUser == 0) {
       messageConfirm = "Tem certeza que deseja tornar " + this.personSelected.user.username + " um administrador?";
-      userRole = "admin"
+      userRoleCode = 0
     }
     if (typeUser == 1) {
       messageConfirm = "Tem certeza que deseja tornar " + this.personSelected.user.username + " um usuário comum?";
-      userRole = "user"
+      userRoleCode = 1
     }
     this.confirmationService.confirm({
       target: event.target as EventTarget,
@@ -392,7 +476,7 @@ export class AdministrativoPageComponent {
         let p = new PersonInsertUpdateAdapter();
 
         user.idPublic = this.personSelected.user.id
-        user.role = userRole
+        user.role = userRoleCode
         user.username = this.personSelected.user.username
 
         p.birthday = this.personSelected.birthday
@@ -403,6 +487,7 @@ export class AdministrativoPageComponent {
 
         this.personService.updateTypeUser(p).subscribe(res => {
           this.toastService.showToastSuccess("Atualização de usuário", "Usuário atualizado com sucesso")
+          this.refreshTableUser()
         }, error => {
           if (error.error != null) {
             this.toastService.showToastError(error.error.title, error.error.message);
@@ -426,8 +511,6 @@ export class AdministrativoPageComponent {
   newUser() {
     this.showDialogCreateUser = true;
   }
-
-  //Fim metodos para gerenciamento de Usuario
 
   //Inicio da logica de atualização de usuario
   updateUser() {
@@ -470,7 +553,7 @@ export class AdministrativoPageComponent {
     let user = new UserInsertUpdateAdapter();
     user.username = "" + this.userEditForm.get('username')?.value;
     user.idPublic = this.personSelected.user.id
-
+    user.role = this.personSelected.user.role.roleCode;
     let p = new PersonInsertUpdateAdapter();
     let date = this.userEditForm.get("dtNasc")?.value
 
@@ -487,6 +570,7 @@ export class AdministrativoPageComponent {
       p.user = user;
       this.personService.update(p).subscribe(response => {
         this.toastService.showToastSuccess("Atualização de usuário", "Usuário atualizado com sucesso")
+        this.refreshAll()
         setTimeout(() => {
           this.isloading = false;
           this.showDialogUpdateUser = false;
@@ -507,6 +591,7 @@ export class AdministrativoPageComponent {
       p.user = user;
       this.personService.update(p).subscribe(response => {
         this.toastService.showToastSuccess("Atualização de usuário", "Usuário atualizado com sucesso")
+        this.refreshAll()
         setTimeout(() => {
           this.isloading = false;
           this.showDialogUpdateUser = false;
@@ -586,10 +671,10 @@ export class AdministrativoPageComponent {
 
     this.personService.insert(person).subscribe(response => {
       this.toastService.showToastSuccess("Registro de usuário", "Usuário adicionado com sucesso")
+      this.refreshAll()
       setTimeout(() => {
         this.isloading = false;
         this.showDialogCreateUser = false
-        this.loadPersonsInfo()
       }, 1000);
     }, error => {
       if (error.error != null) {
@@ -621,5 +706,675 @@ export class AdministrativoPageComponent {
   }
 
   //Fim da Logica para criação de usuário
+  //Fim metodos para gerenciamento de Usuario
 
+  //Inicio metodos para ggerenciamento de plataformas
+  configPlataformsInfo() {
+    this.createMenuOptionSelectPlatformListItems();
+    this.loadAllPlataforms();
+  }
+
+  loadAllPlataforms() {
+    this.allPlataforms = []
+    this.streamsService.findAllStreamsPlataforms().subscribe(res => {
+      this.allPlataforms = res;
+      console.log(this.allPlataforms);
+
+      this.separePlatformsByStatus();
+    }, error => {
+      if (error.error != null) {
+        this.toastService.showToastError(error.error.title, error.error.message);
+      } else {
+        this.toastService.showToastError("Carregamendo de plataformas", "Falha ao consultar plataformas: Servidor com problemas");
+      }
+      console.log(error);
+    })
+  }
+
+  separePlatformsByStatus() {
+    this.enabledPlataforms = [];
+    this.desenabledPlataforms = []
+    this.allPlataforms.forEach(item => {
+      if (item.active) {
+        this.enabledPlataforms.push(item)
+      } else {
+        this.desenabledPlataforms.push(item)
+      }
+    })
+  }
+
+  createMenuOptionSelectPlatformListItems() {
+    this.menuOptionSelectPlatformListItems = [
+      { label: "Todas", command: () => { this.openListPlataform(this.allPlataforms, "todas") } },
+      { label: "Ativadas", command: () => { this.openListPlataform(this.enabledPlataforms, "ativadas") } },
+      { label: "Desativadas", command: () => { this.openListPlataform(this.desenabledPlataforms, "desativadas") } },
+    ]
+  }
+
+  openListPlataform(list: PlataformsAdapter[], tipoLista: string) {
+    this.plataformsToList = [];
+    list.forEach(item => {
+      let status = "";
+      if (item.active) {
+        status = "Ativado"
+      } else {
+        status = "Desativado"
+      }
+      this.plataformsToList.push({ name: item.name, url: item.urlBase, status: status })
+    })
+    this.typeListPlatformSelected = tipoLista;
+    this.showDialogListPlataform = true;
+
+  }
+
+  newPlatform() {
+    this.showDialogCreatePlataforms = true;
+  }
+
+  cancelCreatePlataform() {
+    this.clearFieldsCreatePlataform();
+    this.showDialogCreatePlataforms = false;
+    this.showDialogUpdatePlataform = false;
+  }
+
+  clearFieldsCreatePlataform() {
+    this.createPlataformForm = this._formBuilder.group({
+      namePlataform: ['', Validators.required],
+      urlPlataform: ['', [Validators.required]]
+    });
+  }
+
+  registerPlataform() {
+    if (this.createPlataformForm.get('namePlataform')?.valid == false) {
+      this.toastService.showToastWarn("Campo inválido", "Informe um nome");
+      return
+    }
+
+    if (this.createPlataformForm.get('urlPlataform')?.valid == false) {
+      this.toastService.showToastWarn("Campo inválido", "Informe uma URL");
+      return
+    }
+    this.isloading = true;
+    let adapter = new PlataformsAdapter();
+
+    adapter.name = "" + this.createPlataformForm.get('namePlataform')?.value;
+    adapter.urlBase = "" + this.createPlataformForm.get('urlPlataform')?.value;
+
+    this.streamsService.registerPlataform(adapter).subscribe(res => {
+      this.toastService.showToastSuccess("Registro de plataforma", "Plataforma adicionado com sucesso")
+      this.refreshTablePlataform()
+      setTimeout(() => {
+        this.isloading = false;
+        this.showDialogCreatePlataforms = false
+      }, 1000);
+    }, error => {
+      if (error.error != null) {
+        this.isloading = false;
+        this.toastService.showToastError(error.error.title, error.error.message);
+      } else {
+        this.isloading = false;
+        this.toastService.showToastError("Registro de plataforma", "Falha ao adicionar plataforma: Servidor com problemas");
+      }
+      console.log(error);
+      this.isloading = false;
+    })
+  }
+
+  updatePlataform() {
+    if (this.createPlataformForm.get('namePlataform')?.valid == false) {
+      this.toastService.showToastWarn("Campo inválido", "Informe um nome");
+      return
+    }
+
+    if (this.createPlataformForm.get('urlPlataform')?.valid == false) {
+      this.toastService.showToastWarn("Campo inválido", "Informe uma URL");
+      return
+    }
+    this.isloading = true;
+    let adapter = new PlataformsAdapter();
+    adapter.idPublic = this.plataformSelected.idPublic;
+    adapter.name = "" + this.createPlataformForm.get('namePlataform')?.value;
+    adapter.urlBase = "" + this.createPlataformForm.get('urlPlataform')?.value;
+    this.streamsService.updatePlataform(adapter).subscribe(res => {
+      this.toastService.showToastSuccess("Atualização de plataforma", "Plataforma atualizada com sucesso")
+      this.refreshTablePlataform()
+      setTimeout(() => {
+        this.isloading = false;
+        this.showDialogUpdatePlataform = false
+      }, 1000);
+    }, error => {
+      if (error.error != null) {
+        this.isloading = false;
+        this.toastService.showToastError(error.error.title, error.error.message);
+      } else {
+        this.isloading = false;
+        this.toastService.showToastError("Atualização de plataforma", "Falha ao atualizar plataforma: Servidor com problemas");
+      }
+      console.log(error);
+      this.isloading = false;
+    })
+  }
+
+  refreshTablePlataform() {
+    this.plataformsToList = []
+    this.toastService.showToastInfo("Informação", "Atualizando tabela isso pode levar alguns segundos")
+    this.clearAllListPlataforms();
+    this.streamsService.findAllStreamsPlataforms().subscribe(res => {
+      this.allPlataforms = res;
+      console.log(res);
+      this.allPlataforms.forEach(item => {
+        if (item.active) {
+          this.enabledPlataforms.push(item)
+        } else {
+          this.desenabledPlataforms.push(item)
+        }
+      })
+      if (this.typeListPlatformSelected == "todas") {
+        this.openListPlataform(this.allPlataforms, this.typeListPlatformSelected)
+      }
+      if (this.typeListPlatformSelected == "ativadas") {
+        this.openListPlataform(this.enabledPlataforms, this.typeListPlatformSelected)
+      }
+      if (this.typeListPlatformSelected == "desativadas") {
+        this.openListPlataform(this.desenabledPlataforms, this.typeListPlatformSelected)
+      }
+    }, error => {
+      if (error.error != null) {
+        this.toastService.showToastError(error.error.title, error.error.message);
+      } else {
+        this.toastService.showToastError("Carregamendo de plataformas", "Falha ao consultar plataformas: Servidor com problemas");
+      }
+      console.log(error);
+    })
+  }
+
+  clearAllListPlataforms() {
+    this.allPlataforms = []
+    this.enabledPlataforms = []
+    this.desenabledPlataforms = []
+  }
+
+  filterPlataformList(e: any): any {
+    this.listPlataformFilter = e.target.value
+    return this.listPlataformFilter;
+  }
+
+  openMenuTablePlatform(event: any, menuOptionSelectPlatformListItems: Menu, platform: any) {
+    this.menuOptiontPlatformListItems = [];
+    let filter = this.allPlataforms.find(f => f.name == platform.name && f.urlBase == platform.url);
+    if (filter != undefined) {
+      this.plataformSelected = filter
+      if (this.plataformSelected.active) {
+        this.menuOptiontPlatformListItems.push({ label: "Desativar", command: () => this.setStatusPlataform(false, event) })
+      } else {
+        this.menuOptiontPlatformListItems.push({ label: "Ativar", command: () => this.setStatusPlataform(true, event) })
+      }
+      this.menuOptiontPlatformListItems.push({ label: "Editar", command: () => this.editPlatform() })
+    }
+
+    menuOptionSelectPlatformListItems.toggle(event)
+  }
+
+  editPlatform(): void {
+    this.setFieldsPlataform();
+    this.showDialogUpdatePlataform = true;
+  }
+
+  setFieldsPlataform() {
+    this.createPlataformForm = this._formBuilder.group({
+      namePlataform: [this.plataformSelected.name, Validators.required],
+      urlPlataform: [this.plataformSelected.urlBase, [Validators.required]]
+    });
+  }
+
+  setStatusPlataform(active: boolean, event: any): void {
+    let messageConfirm = "";
+    if (active) {
+      messageConfirm = "Tem certeza que deseja desativar a plataforma " + this.plataformSelected.name + "?"
+    } else {
+      messageConfirm = "Tem certeza que deseja ativar a plataforma " + this.plataformSelected.name + "?"
+    }
+    this.confirmationService.confirm({
+      target: event.target as EventTarget,
+      message: messageConfirm,
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        let adapter = new PlataformsAdapter();
+        adapter.active = active
+        adapter.idPublic = this.plataformSelected.idPublic
+        adapter.name = this.plataformSelected.name
+        adapter.urlBase = this.plataformSelected.urlBase
+        console.log(active);
+        if (!active) {
+          this.streamsService.disablePlataformPlataform(adapter).subscribe(res => {
+            this.toastService.showToastSuccess("Atualização de plataforma", "Plataforma atualizado com sucesso")
+            this.refreshTablePlataform()
+          }, error => {
+            if (error.error != null) {
+              this.toastService.showToastError(error.error.title, error.error.message);
+            } else {
+              this.toastService.showToastError("Atualização de plataforma", "Falha ao atualizar plataforma: Servidor com problemas");
+            }
+            console.log(error);
+          })
+        } else {
+          this.streamsService.enablePlataform(adapter).subscribe(res => {
+            this.toastService.showToastSuccess("Atualização de plataforma", "Plataforma atualizado com sucesso")
+            this.refreshTablePlataform()
+          }, error => {
+            if (error.error != null) {
+              this.toastService.showToastError(error.error.title, error.error.message);
+            } else {
+              this.toastService.showToastError("Atualização de plataforma", "Falha ao atualizar plataforma: Servidor com problemas");
+            }
+            console.log(error);
+          })
+        }
+
+      },
+      reject: () => { this.toastService.showToastInfo("Confimação", "Operação cancelada") }
+    })
+  }
+
+  //Fim metodos para ggerenciamento de plataformas
+
+  //Inicio metodos para gerenciamento de Formularios de agendamento
+  async configSchedulePersonsInfo() {
+    await this.loadLists();
+    this.makeMenuOptionSelectSchedulePersonListItems();
+  }
+
+  async loadLists() {
+    this.scheduleFormPerson = [];
+    this.scheduleFormPersonCompleted = [];
+    this.scheduleFormPersonUncompleted = [];
+    this.personsEnabled.forEach(person => {
+      let adapter = new PersonInsertUpdateAdapter()
+      adapter.idPublic = person.id;
+      this.schedulePersonService.getAllSchedulePersonByPerson(adapter).subscribe(res => {
+        if (res.length > 0) {
+          this.scheduleFormPersonCompleted.push({ person: person, schedules: res })
+        } else {
+          this.scheduleFormPersonUncompleted.push({ person: person, schedules: res })
+        }
+        this.scheduleFormPerson.push({ person: person, schedules: res });
+      }, error => {
+        if (error.error != null) {
+          this.toastService.showToastError(error.error.title, error.error.message);
+        } else {
+          this.toastService.showToastError("Registro de agenda de usuário", "Falha ao consultar agenda de usuário: Servidor com problemas");
+        }
+        console.log(error);
+      });
+    })
+
+  }
+
+  makeMenuOptionSelectSchedulePersonListItems() {
+    this.menuOptionSelectSchedulePersonListItems = [
+      { label: "Todos", command: () => this.openListSchedulePerson(this.scheduleFormPerson, "todos") },
+      { label: "Preenchidos", command: () => this.openListSchedulePerson(this.scheduleFormPersonCompleted, "preenchidos") },
+      { label: "Não preenchidos", command: () => this.openListSchedulePerson(this.scheduleFormPersonUncompleted, "nao_preenchidos") }
+    ]
+  }
+
+  openListSchedulePerson(list: ScheduleFormPerson[], tipoLista: string) {
+    this.scheduleFormPersonToList = [];
+    this.typeListScheduleFormPersonSelected = tipoLista;
+    list.forEach(item => {
+      let status = "";
+      if (item.schedules.length > 0) {
+        status = "Preenchido"
+      } else {
+        status = "Não preenchido"
+      }
+      this.scheduleFormPersonToList.push({ name: item.person.name, username: item.person.user.username, status: status })
+    })
+    this.showDialogListSchedulePerson = true;
+  }
+
+  filterSchedulePersonList(e: any) {
+    this.listSchedulePersonFilter = e.target.value
+    return this.listSchedulePersonFilter;
+  }
+
+  async refreshTableSchedulePerson() {
+    this.refreshAll();
+    this.toastService.showToastInfo("Informação", "Atualizando tabela isso pode levar alguns segundos")
+    if (this.typeListPlatformSelected == "todos") {
+      this.openListSchedulePerson(this.scheduleFormPerson, this.typeListPlatformSelected)
+    }
+    if (this.typeListPlatformSelected == "preenchidos") {
+      this.openListSchedulePerson(this.scheduleFormPersonCompleted, this.typeListPlatformSelected)
+    }
+    if (this.typeListPlatformSelected == "nao_preenchidos") {
+      this.openListSchedulePerson(this.scheduleFormPersonUncompleted, this.typeListPlatformSelected)
+    }
+  }
+
+  openMenuTableSchedulePerson(event: any, menuOptiontSchedulePersonListItems: Menu, schedulePerson: any) {
+    console.log(schedulePerson);
+    this.menuOptiontSchedulePersonListItems = [];
+    let filter = this.scheduleFormPerson.find(f => f.person.name == (schedulePerson.name));
+
+    if (filter != undefined) {
+      this.scheduleFormPersonSelected = filter
+      this.menuOptiontSchedulePersonListItems.push({ label: "Visualizar", command: () => { this.visualizarSchedulePerson() }, disabled: filter.schedules.length == undefined || filter.schedules.length == 0 })
+    }
+    menuOptiontSchedulePersonListItems.toggle(event)
+  }
+
+  visualizarSchedulePerson() {
+    this.loadHorarios();
+    this.showDialogSchedulePerson = true
+  }
+
+  private loadHorarios() {
+    this.isloading = true;
+    this.resetHorarios();
+
+    this.scheduleFormPersonSelected.schedules.forEach(item => {
+      if (item.weekDay === "domingo") {
+        let horario = new HorariosModel()
+        horario.horario = item.hour
+        this.horariosDomingo.push(horario)
+      }
+      if (item.weekDay === "segunda") {
+        let horario = new HorariosModel()
+        horario.horario = item.hour
+        this.horariosSegunda.push(horario)
+      }
+      if (item.weekDay === "terca") {
+        let horario = new HorariosModel()
+        horario.horario = item.hour
+        this.horariosTerca.push(horario)
+      }
+      if (item.weekDay === "quarta") {
+        let horario = new HorariosModel()
+        horario.horario = item.hour
+        this.horariosQuarta.push(horario)
+      }
+      if (item.weekDay === "quinta") {
+        let horario = new HorariosModel()
+        horario.horario = item.hour
+        this.horariosQuinta.push(horario)
+      }
+      if (item.weekDay === "sexta") {
+        let horario = new HorariosModel()
+        horario.horario = item.hour
+        this.horariosSexta.push(horario)
+      }
+      if (item.weekDay === "sabado") {
+        let horario = new HorariosModel()
+        horario.horario = item.hour
+        this.horariosSabado.push(horario)
+      }
+    })
+    this.isloading = false;
+  }
+
+  private resetHorarios() {
+    this.horariosDomingo = [];
+    this.horariosSegunda = [];
+    this.horariosTerca = [];
+    this.horariosQuarta = [];
+    this.horariosQuinta = [];
+    this.horariosSexta = [];
+    this.horariosSabado = [];
+  }
+
+  async createSchedule() {
+    this.configCalendar()
+    this.getPresonsCamDoScehdule();
+    this.showDialogCreateSchedulesLive = true;
+    this.schedulesOfDayToDelete = []
+    this.schedulesOfDayToList = []
+  }
+
+  getPresonsCamDoScehdule() {
+    this.liveScheduleService.getAllPersonsCamDoLive(new Date()).subscribe(res => {
+      this.personsCanDoLive = res;
+      if (this.personsCanDoLive.length < 1) {
+        this.toastService.showToastWarn("Consulta de usuários", "Não foi encontrado nenhum usuário com permissão para agendar")
+      }
+    }, error => {
+      if (error.error != null) {
+        this.toastService.showToastError(error.error.title, error.error.message);
+      } else {
+        this.toastService.showToastError("Consulta de Usuários", "Falha ao consultar usuários: Servidor com problemas");
+      }
+      console.log(error);
+    })
+  }
+
+  configCalendar() {
+    this.minDate = DateUtilsService.getToday()
+    this.maxDate = DateUtilsService.plusDays(new Date(), 1)
+  }
+
+  selectDateScheduleBtn() {
+    if (!this.createScheduleLiveForm.get('dateOfScehdule')?.valid) {
+      return;
+    }
+    let dateSelected_ = this.createScheduleLiveForm.get('dateOfScehdule')?.value ?? undefined;
+    if (dateSelected_ == undefined) {
+      return;
+    }
+    this.dateSelected = DateUtilsService.dateToUnixTime(dateSelected_)
+    this.isloading = true;
+    this.selectedDate = DateUtilsService.DateToStringFormatDate(DateUtilsService.unixTimeToDate(this.dateSelected));
+    this.getAllSchedulesOfDaySelected(DateUtilsService.unixTimeToDate(this.dateSelected));
+    this.getAllSchedulesOfBeforeDaySelected(DateUtilsService.unixTimeToDate(this.dateSelected));
+  }
+
+  getAllSchedulesOfBeforeDaySelected(dateSelected: Date) {
+    let dateBefore = DateUtilsService.plusDays(dateSelected, -1);
+    this.liveScheduleService.getAllLiveSchedule(dateBefore).subscribe(res => {
+      this.isloading = false;
+      console.log(res);
+      this.schedulesOfBeforeDaySelected = res;
+    }, error => {
+      if (error.error != null) {
+        this.toastService.showToastError(error.error.title, error.error.message);
+      } else {
+        this.toastService.showToastError("Consulta de agenda", "Falha ao consultar Agenda: Servidor com problemas");
+      }
+      console.log(error);
+      this.isloading = false
+    });
+  }
+
+  getAllSchedulesOfDaySelected(dateSelected: Date) {
+    this.liveScheduleService.getAllLiveSchedule(dateSelected).subscribe(res => {
+      this.isloading = false;
+      console.log(res);
+      this.schedulesOfDaySelected = res;
+      this.createListTable();
+    }, error => {
+      if (error.error != null) {
+        this.toastService.showToastError(error.error.title, error.error.message);
+      } else {
+        this.toastService.showToastError("Consulta de agenda", "Falha ao consultar Agenda: Servidor com problemas");
+      }
+      console.log(error);
+      this.isloading = false
+    });
+  }
+
+  createListTable() {
+    this.schedulesOfDayToList = []
+    this.listHoursSchedule.forEach(hour => {
+      let filter: LiveScheduleAdapter = this.schedulesOfDaySelected.filter(filter => DateUtilsService.unixTimeToDate(filter.startTime).getHours() == Number.parseInt(hour))[0];
+      if (filter != undefined) {
+        this.schedulesOfDayToList.push({ username: filter.person.user.username, horario: hour })
+      }
+      else {
+        this.schedulesOfDayToList.push({ username: "Vago", horario: hour })
+      }
+    });
+  }
+
+  filterSchedulesOfDayToList(e: any) {
+    this.listScheduleOfDayToList = e.target.value
+    return this.listScheduleOfDayToList;
+  }
+
+  refreshTableUserSchedulesOfDayToList() {
+    this.createListTable()
+  }
+
+  cancelCreateScheduleBtn() {
+    this.createScheduleLiveForm = this._formBuilder.group({
+      dateOfScehdule: [new Date(), Validators.required],
+      streamerToSchedule: [new PersonResponseAdapter(), Validators.required]
+    });
+    this.schedulesOfDayToList = []
+    this.schedulesOfDayToDelete = []
+    this.selectedDate = "Não selecionado"
+    this.dateSelected = 0
+    this.showDialogCreateSchedulesLive = false;
+  }
+
+  createOrDeleteSchedule(schedule: any, event: any) {
+    if (schedule.username == "Vago") {
+      this.confirmationService.confirm({
+        target: event.target as EventTarget,
+        message: "Deseja Realizar um agendamento no horario: " + schedule.horario + "?",
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+          this.timeSelected = schedule.horario
+          this.showDialogRegisterSchedulesLiveForm = true;
+        },
+        reject: () => { this.toastService.showToastInfo("Confimação", "Operação cancelada") }
+      });
+    } else {
+      this.confirmationService.confirm({
+        target: event.target as EventTarget,
+        message: "Deseja remover o  streamer: " + schedule.username + " do horario " + schedule.horario + "?",
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+          this.removeSchedule(schedule);
+        },
+        reject: () => { this.toastService.showToastInfo("Confimação", "Operação cancelada") }
+      })
+    }
+  }
+
+  removeSchedule(schedule: any) {
+    let date_start = DateUtilsService.unixTimeToDate(this.dateSelected)
+    let timeSelectedInt = Number.parseInt(schedule.horario);
+    let startTime = date_start.setHours(timeSelectedInt, 0, 0, 0)
+    let filter = this.schedulesOfDaySelected.findIndex(find => find.startTime == startTime && find.person.user.username);
+    if (filter == undefined) {
+      this.toastService.showToastWarn("Falha ao remover agendamento", "não foi possivel encontrar streamer");
+      return;
+    }
+    this.schedulesOfDayToDelete.push(this.schedulesOfDaySelected[filter]);
+    this.schedulesOfDaySelected.splice(filter, 1);
+    this.createListTable()
+  }
+
+  saveNewSchedule(event: any) {
+    let streamer: PersonResponseAdapter = this.createScheduleLiveForm.get('streamerToSchedule')?.value ?? new PersonResponseAdapter();
+    if (streamer.id == undefined || streamer.id.length < 1) {
+      this.toastService.showToastWarn("Falha ao registrar agendamento", "O streamer deve ser selecionado");
+      return;
+    }
+
+    if (this.schedulesOfBeforeDaySelected.filter(filter => filter.person.id == streamer.id).length > 0
+      || this.schedulesOfDaySelected.filter(filter => filter.person.id == streamer.id).length > 0) {
+      this.confirmationService.confirm({
+        target: event.target as EventTarget,
+        message: "O Streamer " + streamer.user.username + ", já tem uma agendamento entre a data anterior e a data atual selecionada, Deseja agenda-lo mesmo assim?",
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+          this.registerSchedule(streamer)
+        },
+        reject: () => { this.toastService.showToastInfo("Confimação", "Operação cancelada") }
+      })
+
+    } else {
+      this.registerSchedule(streamer);
+    }
+  }
+
+  private registerSchedule(streamer: PersonResponseAdapter) {
+    let newSchedule = new LiveScheduleAdapter()
+    let timeSelectedInt = Number.parseInt(this.timeSelected);
+    let date_start = DateUtilsService.unixTimeToDate(this.dateSelected)
+    let date_end = DateUtilsService.unixTimeToDate(this.dateSelected)
+    let startTime = date_start.setHours(timeSelectedInt, 0, 0, 0)
+    let endTime = date_end.setHours(timeSelectedInt + 1, 0, 0, 0)
+
+    newSchedule.person = streamer;
+    newSchedule.endTime = endTime
+    newSchedule.startTime = startTime;
+    newSchedule.date = startTime;
+
+    this.schedulesOfDaySelected.push(newSchedule);
+    this.createListTable()
+    this.cancelNewSchedule()
+  }
+
+  cancelNewSchedule() {
+    this.showDialogRegisterSchedulesLiveForm = false
+    this.timeSelected = "";
+    this.createScheduleLiveForm.get('streamerToSchedule')?.setValue(new PersonResponseAdapter());
+  }
+
+  confirmNewSchedule(event: any) {
+    this.isloading = true;
+    if (this.schedulesOfDayToDelete.length > 0) {
+      this.liveScheduleService.deleteLiveSchedule(this.schedulesOfDayToDelete).subscribe(res => {
+        this.liveScheduleService.registerLiveSchedule(this.schedulesOfDaySelected).subscribe(res => {
+          this.toastService.showToastSuccess("Agendamento", "Agendamento realizado com sucesso")
+          console.log(res);
+          this.createSchedule()
+          this.cancelNewSchedule();
+          this.cancelCreateScheduleBtn()
+          setTimeout(() => {
+            this.isloading = false;
+            this.showDialogCreateSchedulesLive = false;
+          }, 1000);
+        }, error => {
+          if (error.error != null) {
+            this.toastService.showToastError(error.error.title, error.error.message);
+          } else {
+            this.toastService.showToastError("Registro de agendamento", "Falha ao Agendar: Servidor com problemas");
+          }
+          this.isloading = false;
+          console.log(error);
+        })
+      }, error => {
+        if (error.error != null) {
+          this.toastService.showToastError(error.error.title, error.error.message);
+        } else {
+          this.toastService.showToastError("Registro de agendamento", "Falha ao Agendar: Servidor com problemas");
+        }
+        this.isloading = false;
+        console.log(error);
+      })
+      return;
+    } else {
+      this.liveScheduleService.registerLiveSchedule(this.schedulesOfDaySelected).subscribe(res => {
+        this.toastService.showToastSuccess("Agendamento", "Agendamento realizado com sucesso")
+        console.log(res);
+        this.createSchedule()
+        this.cancelNewSchedule();
+        this.cancelCreateScheduleBtn()
+        setTimeout(() => {
+          this.isloading = false;
+          this.showDialogCreateSchedulesLive = false;
+        }, 1000);
+      }, error => {
+        if (error.error != null) {
+          this.toastService.showToastError(error.error.title, error.error.message);
+        } else {
+          this.toastService.showToastError("Registro de agendamento", "Falha ao Agendar: Servidor com problemas");
+        }
+        this.isloading = false;
+        console.log(error);
+      })
+    }
+  }
 }

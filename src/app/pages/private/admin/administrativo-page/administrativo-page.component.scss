@@ -4,11 +4,153 @@
         width: 100%;
         height: 100%;
 
-        .menuOptionUserList .p-menu {
-            margin-top: -10%;
+        .showSchedulePerson .p-dialog {
+            .p-accordion {
+                position: relative;
+                margin-top: 2%;
+
+                .p-accordion-tab {
+                    .p-toggleable-content {
+                        .inline {
+                            display: flex;
+                            flex-direction: row;
+
+                            .ng-star-inserted {
+                                margin: 0.8%;
+                            }
+                        }
+
+                        .footer {
+                            margin-top: 3%;
+                        }
+                    }
+                }
+            }
         }
 
-        .menuOptionSelectUserList .p-menu {}
+        .listSchedulePerson .p-dialog {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+
+            .p-dialog-content {
+                .p-datatable {
+                    .p-datatable-header {
+                        width: 100%;
+
+                        .p-button {
+                            margin-left: 2%;
+                        }
+                    }
+
+                }
+            }
+        }
+
+        .editPlataform .p-dialog {
+            width: 100%;
+            height: 100%;
+
+            .p-card {
+                position: relative;
+                width: 50%;
+                height: auto;
+                left: 25%;
+
+                .p-card-header {
+                    left: 10%;
+                    position: relative;
+                    width: 70%;
+                }
+
+                .p-card-body {
+                    .p-float-label {
+                        position: relative;
+                        width: 100%;
+                    }
+
+                    .p-inputtext {
+                        position: relative;
+                        width: 100%;
+                    }
+                }
+
+                .p-card-footer {
+                    position: relative;
+                    left: 10%;
+                    width: 80%;
+                    border: 0;
+
+                    .btnCancelar .p-button {
+                        width: 100%;
+                        background-color: #2f3335;
+                        color: #fff;
+                        border: 0;
+                    }
+
+                    .btnCadastrar .p-button {
+                        background-color: #0a1c29;
+                        color: #fff;
+                        width: 100%;
+                        border: 0;
+                        margin-bottom: 2%;
+                    }
+                }
+            }
+        }
+
+        .createPlataform .p-dialog {
+            width: 100%;
+            height: 100%;
+
+            .p-card {
+                position: relative;
+                width: 50%;
+                height: auto;
+                left: 25%;
+
+                .p-card-header {
+                    left: 10%;
+                    position: relative;
+                    width: 70%;
+                }
+
+                .p-card-body {
+                    .p-float-label {
+                        position: relative;
+                        width: 100%;
+                    }
+
+                    .p-inputtext {
+                        position: relative;
+                        width: 100%;
+                    }
+                }
+
+                .p-card-footer {
+                    position: relative;
+                    left: 10%;
+                    width: 80%;
+                    border: 0;
+
+                    .btnCancelar .p-button {
+                        width: 100%;
+                        background-color: #2f3335;
+                        color: #fff;
+                        border: 0;
+                    }
+
+                    .btnCadastrar .p-button {
+                        background-color: #0a1c29;
+                        color: #fff;
+                        width: 100%;
+                        border: 0;
+                        margin-bottom: 2%;
+                    }
+                }
+            }
+        }
 
         .createUser .p-dialog {
             width: 100%;
@@ -171,6 +313,26 @@
             }
         }
 
+        .listPlataform .p-dialog {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+
+            .p-dialog-content {
+                .p-datatable {
+                    .p-datatable-header {
+                        width: 100%;
+
+                        .p-button {
+                            margin-left: 2%;
+                        }
+                    }
+
+                }
+            }
+        }
+
         .listUser .p-dialog {
             position: relative;
             width: 100%;
@@ -185,6 +347,121 @@
                         .p-button {
                             margin-left: 2%;
                         }
+                    }
+
+                }
+            }
+        }
+
+        .criarAgendamentoDialog .p-dialog {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+
+            .p-card {
+                position: relative;
+                width: 95%;
+                height: auto;
+                left: 2%;
+                top: 2%;
+
+                .p-card-body {
+                    left: 2%;
+                    position: relative;
+                    width: 95%;
+
+                    .p-float-label {
+                        position: relative;
+                        width: 100%;
+                    }
+
+                    .p-calendar {
+                        position: relative;
+                        width: 100%;
+                    }
+
+                    .btnSelectDate .p-button {
+                        background-color: #0a1c29;
+                        color: #fff;
+                        width: 100%;
+                        border: 0;
+                        margin-top: 2%;
+                        margin-bottom: 2%;
+                    }
+
+                    .btnNew .p-button {
+                        background-color: #0a1c29;
+                        color: #fff;
+                        width: 100%;
+                        border: 0;
+                        margin-bottom: 2%;
+                    }
+
+                    .btnCancelSelectDate .p-button {
+                        width: 100%;
+                        background-color: #2f3335;
+                        color: #fff;
+                        border: 0;
+                    }
+
+                    .p-datatable {
+                        .p-datatable-header {
+                            width: 100%;
+
+                            .p-button {
+                                margin-left: 2%;
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
+
+        .registerScheduleForm .p-dialog {
+            position: relative;
+            width: 100%;
+            margin: 0;
+
+            .p-card {
+                position: relative;
+                width: 95%;
+                height: auto;
+                left: 2%;
+                top: 2%;
+
+                .p-card-body {
+                    .p-float-label {
+                        position: relative;
+                        width: 100%;
+                    }
+
+                    .p-dropdown {
+                        position: relative;
+                        width: 100%;
+                    }
+                }
+
+                .p-card-footer {
+                    position: relative;
+                    left: 10%;
+                    width: 80%;
+                    border: 0;
+
+                    .btnList .p-button {
+                        width: 100%;
+                        background-color: #2f3335;
+                        color: #fff;
+                        border: 0;
+                    }
+
+                    .btnNew .p-button {
+                        background-color: #0a1c29;
+                        color: #fff;
+                        width: 100%;
+                        border: 0;
+                        margin-bottom: 2%;
                     }
 
                 }
@@ -209,14 +486,14 @@
                         width: 80%;
                         border: 0;
 
-                        .btnNewUser .p-button {
+                        .btnNew .p-button {
                             width: 40%;
                             background-color: #2f3335;
                             color: #fff;
                             border: 0;
                         }
 
-                        .btnListUser .p-button {
+                        .btnList .p-button {
                             background-color: #0a1c29;
                             color: #fff;
                             width: 40%;
