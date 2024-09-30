@@ -1,0 +1,25 @@
+name: Deploy WebSite do prjeto EquipeAlcance
+on:
+  pull_request:
+    branches: [prod]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Code
+              uses: actions/Checkout@v3
+
+            - name: Setup NODE
+              uses: actions/setup-node@v3
+              with:
+                node-version: 18
+
+            - name: Install Dependencias
+              run: npm i
+
+            - name: Install Express
+              run: npm i -D express
+              
+            - name: Build Project
+              run: npm rum build -c production
