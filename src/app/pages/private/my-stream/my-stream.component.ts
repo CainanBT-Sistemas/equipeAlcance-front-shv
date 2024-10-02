@@ -118,37 +118,37 @@ export class MyStreamComponent {
     this.resetHorarios();
 
     this.schedulePersonResponseAdapter.forEach(item => {
-      if (item.weekDay === "domingo") {
+      if (item.weekDay.toLowerCase() === "domingo") {
         let horario = new HorariosModel()
         horario.horario = item.hour
         this.horariosDomingo.push(horario)
       }
-      if (item.weekDay === "segunda") {
+      if (item.weekDay.toLowerCase() === "segunda") {
         let horario = new HorariosModel()
         horario.horario = item.hour
         this.horariosSegunda.push(horario)
       }
-      if (item.weekDay === "terca") {
+      if (item.weekDay.toLowerCase() === "terca") {
         let horario = new HorariosModel()
         horario.horario = item.hour
         this.horariosTerca.push(horario)
       }
-      if (item.weekDay === "quarta") {
+      if (item.weekDay.toLowerCase() === "quarta") {
         let horario = new HorariosModel()
         horario.horario = item.hour
         this.horariosQuarta.push(horario)
       }
-      if (item.weekDay === "quinta") {
+      if (item.weekDay.toLowerCase() === "quinta") {
         let horario = new HorariosModel()
         horario.horario = item.hour
         this.horariosQuinta.push(horario)
       }
-      if (item.weekDay === "sexta") {
+      if (item.weekDay.toLowerCase() === "sexta") {
         let horario = new HorariosModel()
         horario.horario = item.hour
         this.horariosSexta.push(horario)
       }
-      if (item.weekDay === "sabado") {
+      if (item.weekDay.toLowerCase() === "sabado") {
         let horario = new HorariosModel()
         horario.horario = item.hour
         this.horariosSabado.push(horario)
