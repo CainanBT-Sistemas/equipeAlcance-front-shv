@@ -4,6 +4,7 @@ import { environment } from '../../../environments/environment';
 import { LiveScheduleAdapter } from '../../modules/live-schedule/LiveScheduleAdapter';
 import { GlobalService } from '../global.service';
 import { PersonResponseAdapter } from '../../modules/person/adapters/PersonResponseAdapter';
+import { PersonCamDoLiveAdapter } from '../../modules/person/adapters/PersonCamDoLiveAdapter';
 
 @Injectable({
   providedIn: 'root'
@@ -27,7 +28,7 @@ export class LiveScheduleApiService {
 
   public getAllPersonsCamDoLive(date: number) {
     this.header = this.getHeader()
-    return this.client.get<PersonResponseAdapter[]>(this.baseUrl.concat("/PersonsCamDoLive/".concat(date.toString())), { headers: this.header })
+    return this.client.get<PersonCamDoLiveAdapter[]>(this.baseUrl.concat("/PersonsCamDoLive/".concat(date.toString())), { headers: this.header })
   }
 
   public getAllLiveSchedule(day: Number) {

@@ -20,6 +20,7 @@ import { LiveScheduleService } from '../../../../services/live-schedule.service'
 import { LiveScheduleAdapter } from '../../../../modules/live-schedule/LiveScheduleAdapter';
 import { DateUtilsService } from '../../../../services/date-utils.service';
 import { filter } from 'rxjs';
+import { PersonCamDoLiveAdapter } from '../../../../modules/person/adapters/PersonCamDoLiveAdapter';
 
 @Component({
   selector: 'app-administrativo-page',
@@ -57,7 +58,7 @@ export class AdministrativoPageComponent {
 
   createScheduleLiveForm = this._formBuilder.group({
     dateOfScehdule: [new Date(), Validators.required],
-    streamerToSchedule: [new PersonResponseAdapter(), Validators.required]
+    streamerToSchedule: [new PersonCamDoLiveAdapter(), Validators.required]
   });
 
   allPersons: PersonResponseAdapter[] = []
@@ -86,7 +87,7 @@ export class AdministrativoPageComponent {
   scheduleFormPersonToList: any[] = []
   scheduleFormPersonSelected: ScheduleFormPerson = new ScheduleFormPerson();
 
-  personsCanDoLive: PersonResponseAdapter[] = [];
+  personsCanDoLive: PersonCamDoLiveAdapter[] = [];
   schedulesOfDaySelected: LiveScheduleAdapter[] = []
   schedulesOfDayToDelete: LiveScheduleAdapter[] = []
   schedulesOfBeforeDaySelected: LiveScheduleAdapter[] = []
@@ -1264,7 +1265,7 @@ export class AdministrativoPageComponent {
   cancelCreateScheduleBtn() {
     this.createScheduleLiveForm = this._formBuilder.group({
       dateOfScehdule: [new Date(), Validators.required],
-      streamerToSchedule: [new PersonResponseAdapter(), Validators.required]
+      streamerToSchedule: [new PersonCamDoLiveAdapter(), Validators.required]
     });
     this.schedulesOfDayToList = []
     this.schedulesOfDayToDelete = []
@@ -1312,27 +1313,29 @@ export class AdministrativoPageComponent {
     this.createListTable()
   }
 
-  saveNewSchedule(event: any) {
-    let streamer: PersonResponseAdapter = this.createScheduleLiveForm.get('streamerToSchedule')?.value ?? new PersonResponseAdapter();
-    if (streamer.id == undefined || streamer.id.length < 1) {
+  saveNewSchedule(event: any) {   
+    console.log(this.createScheduleLiveForm.get('streamerToSchedule')?.value);
+    
+    let personCamDoLive: PersonCamDoLiveAdapter = this.createScheduleLiveForm.get('streamerToSchedule')?.value ?? new PersonCamDoLiveAdapter();
+    if (personCamDoLive.person.id == undefined || personCamDoLive.person.id.length < 1) {
       this.toastService.showToastWarn("Falha ao registrar agendamento", "O streamer deve ser selecionado");
       return;
     }
 
-    if (this.schedulesOfBeforeDaySelected.filter(filter => filter.person.id == streamer.id).length > 0
-      || this.schedulesOfDaySelected.filter(filter => filter.person.id == streamer.id).length > 0) {
+    if (this.schedulesOfBeforeDaySelected.filter(filter => filter.person.id == personCamDoLive.person.id).length > 0
+      || this.schedulesOfDaySelected.filter(filter => filter.person.id == personCamDoLive.person.id).length > 0) {
       this.confirmationService.confirm({
         target: event.target as EventTarget,
-        message: "O Streamer " + streamer.user.username + ", já tem uma agendamento entre a data anterior e a data atual selecionada, Deseja agenda-lo mesmo assim?",
+        message: "O Streamer " + personCamDoLive.stream.channel + ", já tem uma agendamento entre a data anterior e a data atual selecionada, Deseja agenda-lo mesmo assim?",
         icon: 'pi pi-exclamation-triangle',
         accept: () => {
-          this.registerSchedule(streamer)
+          this.registerSchedule(personCamDoLive.person)
         },
         reject: () => { this.toastService.showToastInfo("Confimação", "Operação cancelada") }
       })
 
     } else {
-      this.registerSchedule(streamer);
+      this.registerSchedule(personCamDoLive.person);
     }
   }
 
@@ -1357,7 +1360,7 @@ export class AdministrativoPageComponent {
   cancelNewSchedule() {
     this.showDialogRegisterSchedulesLiveForm = false
     this.timeSelected = "";
-    this.createScheduleLiveForm.get('streamerToSchedule')?.setValue(new PersonResponseAdapter());
+    this.createScheduleLiveForm.get('streamerToSchedule')?.setValue(new PersonCamDoLiveAdapter());
   }
 
   confirmNewSchedule(event: any) {
