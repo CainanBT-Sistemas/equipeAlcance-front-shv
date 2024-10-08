@@ -152,6 +152,7 @@ export class AdministrativoPageComponent {
   refreshAll() {
     this.configUsersInfo();
     this.configPlataformsInfo()
+    this.loadLists()
   }
 
   //Inicio metodos para gerenciamento de Usuario
@@ -175,6 +176,7 @@ export class AdministrativoPageComponent {
   async loadAllPersons() {
     this.clearAllListPersons();
     this.personService.getAll().subscribe(res => {
+      this.allPersons = []
       this.allPersons = res;
       this.getQuantityTypePersons()
     }, error => {
@@ -196,6 +198,7 @@ export class AdministrativoPageComponent {
   }
 
   checkUsersAdm() {
+    this.personsAdm = []
     if (this.allPersons.length > 0) {
       this.allPersons.forEach(item => {
         if (item.user.role.roleName === "admin") {
@@ -206,6 +209,7 @@ export class AdministrativoPageComponent {
   }
 
   checkUsersDeleted() {
+    this.personsDeleted = []
     if (this.allPersons.length > 0) {
       this.allPersons.forEach(item => {
         if (item.user.deleted == true) {
@@ -216,6 +220,7 @@ export class AdministrativoPageComponent {
   }
 
   checkUsersDisabled() {
+    this.personsDisabled = []
     if (this.allPersons.length > 0) {
       this.allPersons.forEach(item => {
         if (item.user.deleted == true) {
@@ -226,6 +231,7 @@ export class AdministrativoPageComponent {
   }
 
   checkUsersEnabled() {
+    this.personsEnabled = []
     if (this.allPersons.length > 0) {
       this.allPersons.forEach(item => {
         if (item.user.blocked == false) {
@@ -276,7 +282,12 @@ export class AdministrativoPageComponent {
     this.clearAllListPersons();
     this.personService.getAll().subscribe(res => {
       console.log(res);
+      this.allPersons = []
       this.allPersons = res;
+      this.personsEnabled = []
+      this.personsDisabled = []
+      this.personsDeleted = []
+      this.personsAdm = []
       if (this.allPersons.length > 0) {
         this.allPersons.forEach(item => {
           if (item.user.blocked == false) {
@@ -292,7 +303,31 @@ export class AdministrativoPageComponent {
             this.personsAdm.push(item)
           }
         })
-        this.configSchedulePersonsInfo();
+
+        this.scheduleFormPerson = [];
+        this.scheduleFormPersonCompleted = [];
+        this.scheduleFormPersonUncompleted = [];
+        this.personsEnabled.forEach(async person => {
+          let adapter = new PersonInsertUpdateAdapter()
+          adapter.idPublic = person.id;
+           this.schedulePersonService.getAllSchedulePersonByPerson(adapter).subscribe(res => {
+            if (res.length > 0) {
+              this.scheduleFormPersonCompleted.push({ person: person, schedules: res })
+            } else {
+              this.scheduleFormPersonUncompleted.push({ person: person, schedules: res })
+            }
+            this.scheduleFormPerson.push({ person: person, schedules: res });
+          }, error => {
+            if (error.error != null) {
+              this.toastService.showToastError(error.error.title, error.error.message);
+            } else {
+              this.toastService.showToastError("Registro de agenda de usuário", "Falha ao consultar agenda de usuário: Servidor com problemas");
+            }
+            console.log(error);
+          });
+        })
+
+        this.makeMenuOptionSelectSchedulePersonListItems()
         this.personsToList = []
         if (this.typeListUserSelected == "Todos") {
           this.openListaUsuarios(this.allPersons, this.typeListUserSelected)
@@ -320,6 +355,9 @@ export class AdministrativoPageComponent {
       }
       console.log(error);
     })
+
+
+
   }
 
   openMenuTableUser(event: any, menuOptionUserList: Menu, person: any) {
