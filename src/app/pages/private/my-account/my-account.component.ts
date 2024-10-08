@@ -93,6 +93,7 @@ export class MyAccountComponent {
     let user = new UserInsertUpdateAdapter();
     user.username = "" + this.userEditForm.get('username')?.value;
     user.idPublic = this.person.user.id
+    user.role = this.person.user.role.roleCode;
 
     let p = new PersonInsertUpdateAdapter();
     let date = this.userEditForm.get("dtNasc")?.value
