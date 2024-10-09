@@ -57,7 +57,7 @@ export class AdministrativoPageComponent {
   });
 
   createScheduleLiveForm = this._formBuilder.group({
-    dateOfScehdule: [new Date(), Validators.required],
+    dateOfScehdule: [DateUtilsService.getToday(), Validators.required],
     streamerToSchedule: [new PersonCamDoLiveAdapter(), Validators.required]
   });
 

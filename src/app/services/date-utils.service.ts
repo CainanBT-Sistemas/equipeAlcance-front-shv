@@ -17,7 +17,7 @@ export class DateUtilsService {
   }
 
   public static getToday(): Date {
-    return new Date(new Date().toLocaleDateString("pt-BR",{timeZone:"America/Sao_Paulo"}))
+    return new Date(new Date().toLocaleDateString("en-US",{timeZone:"America/Sao_Paulo"}))
   }
 
   public static plusDays(date: Date, numberDays: number): Date {
