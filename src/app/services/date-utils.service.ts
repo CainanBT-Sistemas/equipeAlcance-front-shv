@@ -13,7 +13,7 @@ export class DateUtilsService {
   }
 
   public static unixTimeToDate(unixTime: number) {
-    return new Date(new Date(unixTime).toLocaleDateString("pt-BR",{timeZone:"America/Sao_Paulo"}));
+    return new Date(unixTime);
   }
 
   public static getToday(): Date {
@@ -22,12 +22,12 @@ export class DateUtilsService {
 
   public static plusDays(date: Date, numberDays: number): Date {
     date = this.setHours(date, 0)
-    let datePlused: Date = new Date(new Date(date.setDate(date.getDate() + numberDays)).toLocaleDateString("pt-BR",{timeZone:"America/Sao_Paulo"}));
+    let datePlused: Date = new Date(date.setDate(date.getDate() + numberDays));
     return datePlused
   }
 
   public static setHours(date: Date, hour: number): Date {
-    return new Date(new Date(date.setHours(hour, 0, 0, 0)).toLocaleDateString("pt-BR",{timeZone:"America/Sao_Paulo"}));
+    return new Date(date.setHours(hour, 0, 0, 0))
   }
 
   public static DateToStringFormatDate(date: Date): string {

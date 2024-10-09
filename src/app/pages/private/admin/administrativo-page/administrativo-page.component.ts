@@ -311,7 +311,7 @@ export class AdministrativoPageComponent {
         this.personsEnabled.forEach(async person => {
           let adapter = new PersonInsertUpdateAdapter()
           adapter.idPublic = person.id;
-           this.schedulePersonService.getAllSchedulePersonByPerson(adapter).subscribe(res => {
+          this.schedulePersonService.getAllSchedulePersonByPerson(adapter).subscribe(res => {
             if (res.length > 0) {
               this.scheduleFormPersonCompleted.push({ person: person, schedules: res })
             } else {
@@ -1199,7 +1199,9 @@ export class AdministrativoPageComponent {
     if (dateSelected_ == undefined) {
       return;
     }
+    console.log(dateSelected_);
     this.dateSelected = DateUtilsService.dateToUnixTime(dateSelected_)
+    console.log(this.dateSelected);
     this.isloading = true;
     this.selectedDate = DateUtilsService.DateToStringFormatDate(DateUtilsService.unixTimeToDate(this.dateSelected));
     this.getAllSchedulesOfDaySelected(DateUtilsService.unixTimeToDate(this.dateSelected));
@@ -1243,8 +1245,13 @@ export class AdministrativoPageComponent {
   createListTable() {
     this.schedulesOfDayToList = []
     this.listHoursSchedule.forEach(hour => {
-      let filter: LiveScheduleAdapter = this.schedulesOfDaySelected.filter(filter => DateUtilsService.unixTimeToDate(filter.startTime).getHours() == Number.parseInt(hour))[0];
-      if (filter != undefined) {
+      let filter: LiveScheduleAdapter = new LiveScheduleAdapter();
+      this.schedulesOfDaySelected.forEach(schedulesOfDay => {
+        if (DateUtilsService.unixTimeToDate(schedulesOfDay.startTime).getHours() == Number.parseInt(hour)) {
+          filter = schedulesOfDay
+        }
+      })
+      if (filter != undefined && filter.person != undefined && filter.person.user != undefined && filter.person.user.username!=undefined && filter.person.user.username.trim().length > 0) {
         this.schedulesOfDayToList.push({ username: filter.person.user.username, horario: hour })
       }
       else {
@@ -1275,6 +1282,10 @@ export class AdministrativoPageComponent {
   }
 
   createOrDeleteSchedule(schedule: any, event: any) {
+    console.log(schedule);
+    console.log(event);
+
+
     if (schedule.username == "Vago") {
       this.confirmationService.confirm({
         target: event.target as EventTarget,
@@ -1313,9 +1324,8 @@ export class AdministrativoPageComponent {
     this.createListTable()
   }
 
-  saveNewSchedule(event: any) {   
+  saveNewSchedule(event: any) {
     console.log(this.createScheduleLiveForm.get('streamerToSchedule')?.value);
-    
     let personCamDoLive: PersonCamDoLiveAdapter = this.createScheduleLiveForm.get('streamerToSchedule')?.value ?? new PersonCamDoLiveAdapter();
     if (personCamDoLive.person.id == undefined || personCamDoLive.person.id.length < 1) {
       this.toastService.showToastWarn("Falha ao registrar agendamento", "O streamer deve ser selecionado");
