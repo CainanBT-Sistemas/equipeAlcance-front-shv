@@ -33,8 +33,8 @@
                 (click)="goToWhatchStreamers()" />
             <p-button icon="pi pi-calendar" pTooltip="minha agenda" tooltipPosition="bottom"
                 (click)="goToMySchedule()" />
-            <p-button icon="pi pi-percentage" pTooltip="minha pontuação" tooltipPosition="bottom"
-                (click)="goToMyPonctuaction()" />
+            <p-button icon="pi pi-percentage" pTooltip="pontuações" tooltipPosition="bottom"
+                (click)="goToPonctuaction()" />
         </ng-template>
 
         <ng-template pTemplate="end">
@@ -56,4 +56,5 @@
     <div *ngIf="openMySchedule"><app-my-schedule></app-my-schedule></div>
     <div *ngIf="openMyAccount"><app-my-account></app-my-account></div>
     <div *ngIf="openPageAdministrativo"><app-administrativo-page></app-administrativo-page></div>
+    <div *ngIf="openPonctuaction"><app-scores></app-scores></div>
 </body>

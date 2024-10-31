@@ -207,7 +207,7 @@ export class ToolbarComponent {
     this.checkFirstAccesss()
   }
 
-  goToMyPonctuaction() {
+  goToPonctuaction() {
     this.openDashboard = false;
     this.openMyStreams = false;
     this.openWhatchStreamers = false;

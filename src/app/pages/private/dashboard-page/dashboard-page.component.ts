@@ -1,9 +1,12 @@
-import { StreamsService } from './../../../services/streams.service';
+import { DateUtilsService } from './../../../services/date-utils.service';
 import { Component } from '@angular/core';
 import { GlobalService } from '../../../services/global.service';
-import { SchedulePersonService } from '../../../services/schedule-person.service';
 import { MessageService } from 'primeng/api';
 import { Router } from '@angular/router';
+import { ScoresService } from '../../../services/scores.service';
+import { ScoresRequestAdapter } from '../../../modules/scores/adapters/ScoresRequestAdapter';
+import { PersonInsertUpdateAdapter } from '../../../modules/person/adapters/PersonInsertUpdateAdapter';
+import { ToastService } from '../../../components/toast.service';
 
 @Component({
   selector: 'app-dashboard-page',
@@ -13,33 +16,22 @@ import { Router } from '@angular/router';
 export class DashboardPageComponent {
 
   isloading = false;
+  today = DateUtilsService.DateToStringFormatDate(DateUtilsService.getToday())
+  potuacaoNow = 0;
 
   constructor(
-    private schedulePersonService: SchedulePersonService,
-    private streamsService: StreamsService,
+    private scoresService: ScoresService,
     private messageService: MessageService,
     private route: Router,
+    private toastService: ToastService,
   ){
     if(!GlobalService.personLogged()){
       this.route.navigate([''])
     }
   }
 
-  public showToastSuccess( summary: string, detail: string) {
-    this.messageService.add({ severity: "success", summary: summary, detail: detail })
-  }
-  public showToastInfo( summary: string, detail: string) {
-    this.messageService.add({ severity: "info", summary: summary, detail: detail })
-  }
-  public showToastWarn( summary: string, detail: string) {
-    this.messageService.add({ severity: "warn", summary: summary, detail: detail })
-  }
-  public showToastError( summary: string, detail: string) {
-    this.messageService.add({ severity: "error", summary: summary, detail: detail })
-  }
-
   ngOnInit(): void {
-    
+    this.getPontuacaoNow()
   }
 
   getNameProfile() {
@@ -49,4 +41,23 @@ export class DashboardPageComponent {
   getHeaderWellcome(){
     return "Olá "+ this.getNameProfile()
   }
+
+  getPontuacaoNow(){
+    let request = new ScoresRequestAdapter();
+    request.date = DateUtilsService.dateToUnixTime(DateUtilsService.getToday());
+    request.person = PersonInsertUpdateAdapter.toAdapter(GlobalService.getPerson());
+    this.scoresService.getScoreWithPersonOrNot(request).subscribe(res=>{
+      if(res != null && res.length > 0){
+        this.potuacaoNow = res[0].score
+      }
+    }, error => {
+      if (error.error != null) {
+        this.toastService.showToastError(error.error.title, error.error.message);
+      } else {
+        this.toastService.showToastError("Consulta de Pontuação", "Falha ao consultar Pontuação: Servidor com problemas");
+      }
+      console.log(error);
+    })
+  }
 }
+

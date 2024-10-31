@@ -56,6 +56,7 @@ import { WhatchStreamerComponent } from './pages/private/whatch-streamer/whatch-
 import { MyScheduleComponent } from './pages/private/my-schedule/my-schedule.component';
 import { MyAccountComponent } from './pages/private/my-account/my-account.component';
 import { AdministrativoPageComponent } from './pages/private/admin/administrativo-page/administrativo-page.component';
+import { ScoresComponent } from './pages/private/scores/scores.component';
 
 @NgModule({
   declarations: [
@@ -68,7 +69,8 @@ import { AdministrativoPageComponent } from './pages/private/admin/administrativ
     WhatchStreamerComponent,
     MyScheduleComponent,
     MyAccountComponent,
-    AdministrativoPageComponent
+    AdministrativoPageComponent,
+    ScoresComponent
   ],
   imports: [
     BrowserModule,

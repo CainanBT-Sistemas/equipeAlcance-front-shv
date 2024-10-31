@@ -10,12 +10,33 @@
             left: 2%;
             top: 2%;
 
-            .p-button {
-                width: 100%;
-                background-color: #2f3335;
-                color: #fff;
-                margin-bottom: 2%;
-                border: 0;
+            .p-card-body{
+
+                .p-card-content{
+                    
+                }
+                .p-accordion {
+                    position: relative;
+                    margin-top: 2%;
+                    
+                    .p-accordion-tab {
+    
+                        .p-toggleable-content {
+    
+                            .footer {
+                                margin-top: 3%;
+        
+                                .p-button {
+                                    width: 100%;
+                                    background-color: #2f3335;
+                                    color: #fff;
+                                    margin-bottom: 2%;
+                                    border: 0;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
