@@ -8,7 +8,7 @@ export class DateUtilsService {
   constructor() { }
 
   public static dateToUnixTime(date: Date) {
-    let unixTime = Math.floor(date.getTime());
+    let unixTime = date.getTime();
     return unixTime;
   }
 
