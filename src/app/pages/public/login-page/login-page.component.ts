@@ -66,8 +66,10 @@ export class LoginPageComponent {
     }, error => {
       if (error.error.code != null) {
         this.toast.showToastError(error.error.title, error.error.message);
+        this.isloading = false;
       } else {
         this.toast.showToastError("Login de usuário", "Falha ao realizar login: Servidor com problemas");
+        this.isloading = false;
       }
       console.log(error);
       this.isloading = false;
