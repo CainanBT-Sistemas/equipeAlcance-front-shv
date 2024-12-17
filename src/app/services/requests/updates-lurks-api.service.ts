@@ -13,7 +13,7 @@ export class UpdatesLurksApiService {
 
   constructor(private client: HttpClient) { }
 
-  private baseUrl: string = environment.apiUrl + "/updatesLurks";
+  private baseUrl: string = environment.apiUrl + "/systems";
 
   public getAllUpdatesLurks(){
     this.header =this.getHeaderWithToken()
